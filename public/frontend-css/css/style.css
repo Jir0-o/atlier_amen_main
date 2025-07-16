@@ -1,0 +1,520 @@
+/* google font */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond&family=Jacques+Francois&family=Playfair+Display&family=Poppins&display=swap');
+
+/* All variable start from here */
+:root {
+    --color: #fff;
+    --primary: #580F41;
+    --dark: #191919;
+    --fs-page-title-px: 172px;
+    --fs-page-title-vw: 13vw;
+    --fs-title: 36px;
+    --fs-subtitle: 24px;
+    --fs-body: 20px;
+    --fw-light: 300;
+    --fw-md: 500;
+    --fw-bold: 700;
+    --ff-poppins: "Poppins", sans-serif;
+    --ff-jacques: "Jacques Francois", serif;
+    --ff-cormorant: "Cormorant Garamond", serif;
+    --ff-playfair: "Playfair Display", serif;
+    --ratio-square: 1/1;
+    --ratio-vertical: 4/5;
+    --ratio-horizontal: 6/4;
+    --curve-sm: 8px;
+    --curve-lg: 24px;
+    --curve-circle: 999px;
+    --shadow: 0px 4px 14px #1c294d77;
+}
+/* All variable end from here */
+
+/* All font classes start here */
+.poppins {
+    font-family: "Poppins", sans-serif;
+}
+
+.jacques {
+    font-family: "Jacques Francois", serif;
+}
+
+.cormorant {
+    font-family: "Cormorant Garamond", serif;
+    font-optical-sizing: auto;
+}
+
+.playfair {
+    font-family: "Playfair Display", serif;
+    font-optical-sizing: auto;
+}
+/* All font classes end here */
+
+/* custom library start here */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+main {
+    min-height: 100dvh;
+}
+
+.primary {
+    color: var(--color);
+    background-color: var(--primary);
+}
+
+.white {
+    color: var(--primary);
+    background-color: var(--color);
+}
+
+.dark {
+    color: var(--color);
+    background-color: var(--dark);
+}
+
+.section-gap {
+    padding-block: 120px;
+}
+
+.page-title {
+    width: 100%;
+    overflow: hidden;
+    transition: 1000ms all ease-in;
+}
+
+.page-title.onload {
+    width: 0%;
+}
+
+.page-title h1 {
+    text-transform: uppercase;
+    font-size: var(--fs-page-title-vw);
+}
+
+.title-icon-brush img {
+    width: 100%;
+}
+
+.all-portrait img {
+    width: 100%;
+    object-fit: cover;
+    border-radius: var(--curve-sm);
+    aspect-ratio: var(--ratio-vertical);
+}
+
+.all-portrait iframe {
+    width: 100%;
+    aspect-ratio: var(--ratio-vertical);
+}
+
+.limited-text {
+    overflow: hidden;
+    text-align: justify;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+}
+
+.scroll-up-anim {
+  animation: scrollUpFade 2000ms ease-out;
+}
+
+@keyframes scrollUpFade {
+  0% {
+    transform: translateY(60px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* custom library end here */
+
+/* nav css start */
+.navbar-brand img {
+    max-width: 78px;
+    object-fit: cover;
+    aspect-ratio: var(--ratio-square);
+    border-radius: var(--curve-circle);
+}
+
+.navbar-toggler {
+    color: var(--color);
+    border-color: var(--color);
+}
+
+.nav-link {
+    position: relative;
+    color: var(--color);
+    font-weight: var(--fw-bold);
+    font-family: var(--ff-cormorant);
+}
+
+.nav-link:hover {
+    color: var(--color);
+}
+
+.navbar-nav .nav-link.active {
+    color: var(--color);
+    font-weight: var(--fw-bold);
+    font-family: var(--ff-cormorant);
+}
+
+.shape-nav {
+    left: 0;
+    width: 0%;
+    bottom: -16px;
+    position: absolute;
+    transition: 300ms all ease;
+}
+.shape-nav img {
+    width: 100%;
+}
+
+.nav-link:hover .shape-nav {
+    width: 100%;
+}
+
+.nav-link.active .shape-nav {
+    width: 100%;
+}
+/* nav css end */
+
+/* landing section css start */
+.landing-animation {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+    background-color: #FFF5DF;
+}
+
+.landing-animation .leaf {
+    margin-top: -25px;
+}
+
+.img-shape {
+  height: 100%; 
+}
+
+.vertical-rotate {
+    transform: rotatey(180deg);
+}
+
+.h-35 {
+    height: 35%;
+}
+
+.ms-neg {
+    margin-inline-start: -3rem;
+}
+
+.col-05 {
+  flex: 0 0 auto;
+  width: 4.166666666666667%;
+}
+
+.landing-animation .logo-fixed {
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    z-index: 5;
+    min-width: 220px;
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+
+.landing-animation .logo-fixed img {
+    width: 100%;
+}
+
+.landing-animation .hand-fixed { 
+    left: 50%;
+    z-index: -1;
+    width: 50dvw;
+    bottom: -25px;
+    display: grid;
+    min-width: 240px;
+    position: absolute;
+    transform: translateX(-50%);
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.landing-animation .hand-fixed img {
+    width: 100%;
+}
+
+.landing-animation .flowers {
+    margin-bottom: -25px;
+    position: relative;
+    z-index: -2;
+}
+
+.wave-animation {
+    animation: waving 3000ms linear alternate;
+}
+
+@keyframes waving {
+    
+}
+/* landing section css end */
+
+/* home page css start */
+.recent-img-box {
+    position: relative;
+}
+
+.recent-img-box .img-thumb {
+    width: 100%;
+    object-fit: cover;
+    aspect-ratio: var(--ratio-horizontal);
+}
+
+.recent-img-box .recent-img-hover {
+    top: 0;
+    opacity: 0;
+    width: 50%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    transition: 300ms all ease-in;
+}
+
+.recent-img-box .recent-img-hover.img-left {
+    left: 0;
+}
+
+.recent-img-box .recent-img-hover.img-right {
+    right: 0;
+}
+
+.recent-img-box .recent-img-hover:hover {
+    opacity: 1;
+    width: 100%;
+    transition: 750ms all ease-out;
+}
+
+.recent-img-box.aspect-vertical .img-thumb {
+    aspect-ratio: var(--ratio-vertical);
+}
+
+.artist-profile img {
+    border-radius: 0px 24px 0px 24px;
+}
+
+.bg-shape-title {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: 100% 100%;
+    background-position: center;
+}
+
+.bg-shape-title.title-l {
+    background-image: url(./../img/shape/title-box-l.png);
+}
+
+.bg-shape-title.title-c {
+    background-image: url(./../img/shape/title-box-c.png);
+}
+
+.bg-shape-title.title-r {
+    background-image: url(./../img/shape/title-box-r.png);
+}
+
+.portrait-box.upper-box {
+    margin-top: 50%;
+}
+
+.portrait-box img {
+    width: 100%;
+    aspect-ratio: var(--ratio-vertical);    
+}
+
+.feature-portrait-box {
+    transition: 300ms all ease;
+    border: 1px solid var(--primary);
+}
+
+.feature-portrait-box:hover {
+    border: 1px solid var(--color);
+    transition: 750ms all ease;
+}
+
+.feature-portrait-box:hover img {
+    transform: scale(1.05);
+    transition: 750ms all ease;
+}
+
+.feature-portrait-box img {
+    transition: 300ms all ease;
+    aspect-ratio: var(--ratio-horizontal);
+}
+/* home page css end */
+
+/* art info page start */
+.indi-img-box img {
+    width: 100%;
+    object-fit: cover;
+    border-radius: var(--curve-sm);
+    aspect-ratio: var(--ratio-vertical);
+}
+
+.indi-img-gallery img {
+    width: 100%;
+    object-fit: cover;
+    aspect-ratio: var(--ratio-square);
+}
+
+.indi-img-gallery .active img {
+    filter: grayscale(1);
+}
+
+.art-info table {
+    width: 100%;
+}
+
+.art-info table :where(tr, td) {
+    font-size: var(--fs-subtitle);
+}
+/* art info page end */
+
+/* contact page css start */
+.contact-form .bg-l {
+    background-size: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.contact-profile {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: var(--curve-circle);
+}
+/* contact page css end */
+
+/* cart page design start */
+.bg-banner-box {
+    height: 40vh;
+    display: flex;
+    align-items: center;
+    background-size: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.quick-menu-list li {
+    padding: 8px 16px;
+    position: relative;
+}
+
+.quick-menu-list li::before {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: -1;
+    content: "";
+    width: 0%;
+    position: absolute;
+    background-color: #C8A2C8;
+    transition: 300ms all ease-in;
+}
+
+.quick-menu-list li:hover::before {
+    width: 100%;
+    transition: 500ms all ease-in;
+}
+
+.feature-banner {
+    width: 100%;
+    aspect-ratio: var(--ratio-vertical);
+}
+
+.art-thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    aspect-ratio: var(--ratio-square);
+}
+
+.cart-box .table>:not(caption)>*>* {
+    color: var(--color);
+    background-color: transparent;
+}
+
+.qty-number-field {
+    width: 64px;
+}
+/* cart page design end */
+
+/* checkout page design start */
+.bg-form-dark {
+    padding: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid #fff;
+    border-radius: var(--curve-sm);
+    background-color: #3b082b;
+}
+/* checkout page design end */
+
+/* -------------------------
+    Auth css section start
+ ----------------------------*/
+
+/* Library css for auth start */
+.bg-auth-images {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background-size: cover;
+    justify-content: center;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+/* Library css for auth end */
+
+/* login page css start */
+.form-box-container {
+    padding: 32px;
+    backdrop-filter: blur(2px);
+    border: 1px solid #fff;
+    border-radius: var(--curve-sm);
+}
+/* login page css end */
+
+/* ---------------------
+Auth css section end
+ -----------------------*/
+
+/* footer css start */
+footer h1 {
+    font-size: var(--fs-page-title-vw);
+}
+
+footer a {
+    position: relative;
+}
+
+footer a::before {
+    left: 0;
+    width: 0%;
+    height: 2px;
+    content: "";
+    position: absolute;
+    top: calc(100% + 4px);
+    background-color: #fff;
+    transition: 300ms all ease-in;
+}
+
+footer a:hover::before {
+    width: 80%;
+    transition: 500ms all ease-in;
+}
+/* footer css end */
