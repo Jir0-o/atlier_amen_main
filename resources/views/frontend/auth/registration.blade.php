@@ -19,22 +19,26 @@
                 <div class="col-sm-9 col-md-7 col-xxl-5" data-aos="fade-up" data-aos-duration="2000">
                     <div class="p-4">
                         <div class="form-box-container jacques">
-                            <form action="./backend/demo_1/index.html" method="post" enctype="multipart/form-data">
+                             <form id="registerForm" action="{{ route('frontend.register.store') }}" method="POST" enctype="multipart/form-data">
+                                @csrf
                                 <div class="row form-box">
                                     <div class="col-md-12 mb-4">
                                         <label class="form-label" for="f_name">First Name</label>
                                         <input class="form-control" type="text" name="f_name" id="f_name"
                                             placeholder="Enter your first name">
+                                            <span class="invalid-feedback" data-field="f_name"></span>
                                     </div>
                                     <div class="col-md-12 mb-4">
                                         <label class="form-label" for="l_name">Last Name</label>
                                         <input class="form-control" type="text" name="l_name" id="l_name"
                                             placeholder="Enter your last name">
+                                        <span class="invalid-feedback" data-field="l_name"></span>
                                     </div>
                                     <div class="col-md-12 mb-4">
                                         <label class="form-label" for="email">Email</label>
-                                        <input class="form-control" type="mail" name="email" id="email"
+                                        <input class="form-control" type="email" name="email" id="email"
                                             placeholder="Enter your email">
+                                            <span class="invalid-feedback" data-field="email"></span>
                                     </div>
                                     <div class="col-md-12 mb-4">
                                         <label class="form-label" for="country">Select Country</label>
@@ -729,19 +733,22 @@
                                                 data-country="{&quot;id&quot;:226,&quot;iso&quot;:&quot;ZW&quot;,&quot;name&quot;:&quot;ZIMBABWE&quot;,&quot;nick_name&quot;:&quot;Zimbabwe&quot;,&quot;iso3&quot;:&quot;ZWE&quot;,&quot;num_code&quot;:&quot;716&quot;,&quot;phone_code&quot;:&quot;26&quot;,&quot;created_at&quot;:&quot;2025-06-18T11:12:25.000000Z&quot;,&quot;updated_at&quot;:&quot;2025-06-18T11:12:25.000000Z&quot;}"
                                                 value="ZIMBABWE">ZIMBABWE</option>
                                         </select>
+                                        <span class="invalid-feedback" data-field="country"></span>
                                     </div>
                                     <div class="col-md-12 mb-4">
                                         <label class="form-label" for="password">Password</label>
                                         <input class="form-control" type="password" name="password" id="password"
                                             placeholder="Enter your password">
+                                        <span class="invalid-feedback" data-field="password"></span>
                                     </div>
                                     <div class="col-md-12 mb-4">
                                         <label class="form-label" for="confirm">Confirm Password</label>
-                                        <input class="form-control" type="confirm" name="confirm" id="confirm"
+                                        <input class="form-control" type="password" name="password_confirmation" id="password_confirmation"
                                             placeholder="Re-enter your password">
+                                        <span class="invalid-feedback" data-field="password_confirmation"></span>
                                     </div>
                                     <div class="d-flex flex-column">
-                                        <input class="btn btn-dark" type="submit" value="Registered Now">
+                                        <button id="registerSubmitBtn" class="btn btn-dark" type="submit">Register Now</button>
                                     </div>
                                     <center class="pt-2">
                                         <a class="text-decoration-underline h5" href="{{ route('frontend.login') }}">Already have
@@ -759,3 +766,91 @@
 </main>
 <!-- main content end -->
 @endsection
+@push('scripts')
+<script>
+$(function() {
+    // CSRF header (Laravel)
+    $.ajaxSetup({
+        headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}
+    });
+
+    $('#registerForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const $form = $(this);
+        const $btn  = $('#registerSubmitBtn');
+        const redirectUrl = @json(route('index')); // safe JSON-encoded fallback
+
+        clearFieldErrors($form);
+        $btn.prop('disabled', true).text('Please wait...');
+
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            dataType: 'json'
+        })
+        .done(function(resp) {
+            if (resp.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Registered!',
+                    text: resp.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = resp.redirect || redirectUrl;
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Hmm...',
+                    text: 'Unexpected response from server.'
+                });
+            }
+        })
+        .fail(function(xhr) {
+            if (xhr.status === 422) {
+                const json   = xhr.responseJSON || {};
+                const errors = json.errors || {};
+
+                // Mark fields inline
+                showFieldErrors($form, errors);
+
+                // Build a simple error message for SweetAlert
+                const firstError = Object.values(errors).flat()[0] || 'Please fix the highlighted fields and try again.';
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: firstError
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: 'Something went wrong. Please try again later.'
+                });
+            }
+        })
+        .always(function(){
+            $btn.prop('disabled', false).text('Register Now');
+        });
+    });
+
+    function clearFieldErrors($form) {
+        $form.find('.is-invalid').removeClass('is-invalid');
+        $form.find('.invalid-feedback').text('');
+    }
+
+    function showFieldErrors($form, errors) {
+        $.each(errors, function(field, messages) {
+            const $input    = $form.find('[name="' + field + '"]');
+            const $feedback = $form.find('.invalid-feedback[data-field="' + field + '"]');
+            if ($input.length) { $input.addClass('is-invalid'); }
+            if ($feedback.length) { $feedback.text(messages.join(' ')); }
+        });
+    }
+});
+</script>
+@endpush

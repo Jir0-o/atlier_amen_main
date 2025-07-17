@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\About;
+use App\Models\Category;
+use App\Models\Contract;
+use COM;
 use Illuminate\Http\Request;
 
 class FrontendController extends Controller
@@ -11,7 +15,10 @@ class FrontendController extends Controller
      */
     public function index()
     {
-        return view('frontend.home.index');
+        $categories = Category::where('is_active', true)->get();
+        //recently added 2 categories
+        $recentCategories = Category::where('is_active', true)->latest()->take(2)->get();
+        return view('frontend.home.index', compact('categories', 'recentCategories'));
     }
 
     public function shop()
@@ -46,12 +53,14 @@ class FrontendController extends Controller
 
     public function about()
     {
-        return view('frontend.about-contract.about');
+        $about = About::first();
+        return view('frontend.about-contract.about', compact('about'));
     }
 
     public function contact()
     {
-        return view('frontend.about-contract.contact');
+        $contact = Contract::first();
+        return view('frontend.about-contract.contact', compact('contact'));
     }
 
     /**

@@ -31,7 +31,7 @@
       <span class="nav-item-head">Template Pages</span>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="index.html">
+      <a class="nav-link" href="{{ route('dashboard') }}">
         <i class="mdi mdi-compass-outline menu-icon"></i>
         <span class="menu-title">Dashboard</span>
       </a>
@@ -39,19 +39,22 @@
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
         <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-        <span class="menu-title">UI Elements</span>
+        <span class="menu-title">Frontend</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="ui-basic">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
-            <a class="nav-link" href="pages/ui-features/buttons.html">Buttons</a>
+            <a class="nav-link" href="{{ route('categories.index') }}">Work Category</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="pages/ui-features/dropdowns.html">Dropdowns</a>
+            <a class="nav-link" href="{{route('adminAbout.index')}}">About</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="pages/ui-features/typography.html">Typography</a>
+            <a class="nav-link" href="{{route('adminContract.index')}}">Contract</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{route('contact-messages.index')}}">Contract Message</a>
           </li>
         </ul>
       </div>
@@ -86,5 +89,34 @@
         <span class="menu-title">Documentation</span>
       </a>
     </li>
+    <li class="nav-item">
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+        <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); confirmLogout();">
+            <i class="mdi mdi-logout menu-icon"></i>
+            <span class="menu-title">Logout</span>
+        </a>
+    </li>
   </ul>
 </nav>
+@push('scripts')
+<script>
+function confirmLogout() {
+    Swal.fire({
+        title: 'Logout?',
+        text: "You will be signed out of your account.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, Logout',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('logout-form').submit();
+        }
+    });
+}
+</script>
+@endpush

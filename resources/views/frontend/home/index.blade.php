@@ -1,5 +1,14 @@
 @extends('layouts.guest')
 
+<style>
+.recent-img-box img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+</style>
+
 @section('title', 'Artist Prtfolio')
 
 @section('content')
@@ -20,24 +29,19 @@
             <!-- recent drawing start -->
             <section class="px-4">
                 <div class="row">
-                    <div class="col-sm-6 overflow-hidden p-4">
-                        <a href="./art_info.html" title="Swim in peace">
-                            <div class="recent-img-box" data-aos="zoom-out-right" data-aos-duration="1500">
-                                <img class="img-thumb" src="{{ asset('frontend-css/img/webimg/img-1.png')}}" alt="Recent Image - 1" loading="lazy">
-                                <img class="recent-img-hover img-left" src="{{ asset('frontend-css/img/webimg/img-1 hover-l.png')}}" alt="Recent Image - 1" loading="lazy">
-                                <img class="recent-img-hover img-right" src="{{ asset('frontend-css/img/webimg/img-1 hover-r.png')}}" alt="Recent Image - 1" loading="lazy">
+                    @foreach ($recentCategories as $index => $category)
+                    <div class="col-sm-6 p-4">
+                        <a href="{{ url('category/'.$category->slug) }}" title="{{ $category->name }}">
+                            <div class="recent-img-box"
+                                data-aos="{{ $index % 2 == 0 ? 'zoom-out-right' : 'zoom-out-left' }}"
+                                data-aos-duration="1500">
+                                <img class="img-thumb" src="{{ asset($category->category_image) }}" alt="{{ $category->name }}" loading="lazy">
+                                <img class="recent-img-hover img-left" src="{{ asset($category->image_left) }}" alt="{{ $category->name }}" loading="lazy">
+                                <img class="recent-img-hover img-right" src="{{ asset($category->image_right) }}" alt="{{ $category->name }}" loading="lazy">
                             </div>
                         </a>
                     </div>
-                    <div class="col-sm-6 overflow-hidden p-4">
-                        <a href="./art_info.html" title="Hand Child Drawing">
-                            <div class="recent-img-box" data-aos="zoom-out-left" data-aos-duration="1500">
-                                <img class="img-thumb" src="{{ asset('frontend-css/img/webimg/img-2.png')}}" alt="Recent Image - 2" loading="lazy">
-                                <img class="recent-img-hover img-left" src="{{ asset('frontend-css/img/webimg/img-1 hover-l.png')}}" alt="Recent Image - 2" loading="lazy">
-                                <img class="recent-img-hover img-right" src="{{ asset('frontend-css/img/webimg/img-1 hover-r.png')}}" alt="Recent Image - 2" loading="lazy">
-                            </div>
-                        </a>
-                    </div>
+                    @endforeach
                 </div>
             </section>
             <!-- recent drawing end --> 
@@ -67,56 +71,20 @@
                 </div>
                 <div class="portrait-category pt-5">
                     <div class="row pt-5">
-                        <div class="col-md-5">
-                            <div class="portrait-box">
-                                <a href="./drawing.html" title="Swim in peace">
-                                    <div class="recent-img-box aspect-vertical" data-aos="flip-left" data-aos-duration="2000">
-                                        <img class="img-thumb" src="{{ asset('frontend-css/img/webimg/img-cat-1.png')}}" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-left" src="{{ asset('frontend-css/img/webimg/img-1 hover-l.png')}}" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-right" src="{{ asset('frontend-css/img/webimg/img-1 hover-r.png')}}" alt="Recent Image - 1" loading="lazy">
-                                    </div>
-                                    <h2 class="text-uppercase jacques pt-4">1/ Drawing</h2>
-                                </a>
+                        @foreach ($categories as $index => $category)
+                            <div class="col-md-5 {{ $index % 2 != 0 ? 'offset-md-2 upper-box' : '' }}">
+                                <div class="portrait-box">
+                                    <a href="{{ url('category/'.$category->slug) }}" title="{{ $category->name }}">
+                                        <div class="recent-img-box aspect-vertical" data-aos="flip-left" data-aos-duration="2000">
+                                            <img class="img-thumb" src="{{ asset($category->category_image) }}" alt="{{ $category->name }}" loading="lazy">
+                                            <img class="recent-img-hover img-left" src="{{ asset($category->image_left) }}" alt="{{ $category->name }}" loading="lazy">
+                                            <img class="recent-img-hover img-right" src="{{ asset($category->image_right) }}" alt="{{ $category->name }}" loading="lazy">
+                                        </div>
+                                        <h2 class="text-uppercase jacques pt-4">{{ $loop->iteration }}/ {{ $category->name }}</h2>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-2"></div>
-                        <div class="col-md-5">
-                            <div class="portrait-box upper-box">
-                                <a href="./midea.html" title="Swim in peace">
-                                    <div class="recent-img-box aspect-vertical" data-aos="flip-left" data-aos-duration="2000">
-                                        <img class="img-thumb" src="{{ asset('frontend-css/img/webimg/img-cat-2.png')}}" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-left" src="{{ asset('frontend-css/img/webimg/img-1 hover-l.png')}}" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-right" src="{{ asset('frontend-css/img/webimg/img-1 hover-r.png')}}" alt="Recent Image - 1" loading="lazy">
-                                    </div>
-                                    <h2 class="text-uppercase jacques pt-4">2/ Mixed Media</h2>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-md-5">
-                            <div class="portrait-box">
-                                <a href="./painting.html" title="Swim in peace">
-                                    <div class="recent-img-box aspect-vertical" data-aos="flip-left" data-aos-duration="2000">
-                                        <img class="img-thumb" src="./asset/img/webimg/img-cat-3.png" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-left" src="{{ asset('frontend-css/img/webimg/img-1 hover-l.png')}}" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-right" src="{{ asset('frontend-css/img/webimg/img-1 hover-r.png')}}" alt="Recent Image - 1" loading="lazy">
-                                    </div>
-                                    <h2 class="text-uppercase jacques pt-4">3/ Painting</h2>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-md-2"></div>
-                        <div class="col-md-5">
-                            <div class="portrait-box upper-box">
-                                <a href="./ceramic.html" title="Swim in peace">
-                                    <div class="recent-img-box aspect-vertical" data-aos="flip-left" data-aos-duration="2000">
-                                        <img class="img-thumb" src="./asset/img/webimg/img-cat-4.png" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-left" src="{{ asset('frontend-css/img/webimg/img-1 hover-l.png')}}" alt="Recent Image - 1" loading="lazy">
-                                        <img class="recent-img-hover img-right" src="{{ asset('frontend-css/img/webimg/img-1 hover-r.png')}}" alt="Recent Image - 1" loading="lazy">
-                                    </div>
-                                    <h2 class="text-uppercase jacques pt-4">4/ ceramic</h2>
-                                </a>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
                 </div>
             </section>
