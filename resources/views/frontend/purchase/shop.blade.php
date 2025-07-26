@@ -29,57 +29,28 @@
                     </div>
                 </div>
             </div>
+            @foreach ($Works as $index => $work)
             <div class="all-portrait pt-4 pt-md-5">
                 <div class="row">
                     <div class="col-sm-6 col-md-4 col-xxl-3 p-3">
-                        <a href="./art_info.html">
-                            <div class="portrait-box">
-                                <img data-aos="flip-left" data-aos-duration="2000"
-                                    src="./asset/img/webimg/draw-1.png" alt="Drawing portrait" loading="lazy">
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-sm-6 col-md-4 col-xxl-3 p-3">
-                        <a href="./art_info.html">
-                            <div class="portrait-box">
-                                <img data-aos="flip-right" data-aos-duration="2000"
-                                    src="./asset/img/webimg/draw-2.png" alt="Drawing portrait" loading="lazy">
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-sm-6 col-md-4 col-xxl-3 p-3">
-                        <a href="./art_info.html">
-                            <div class="portrait-box">
-                                <img data-aos="flip-left" data-aos-duration="2000"
-                                    src="./asset/img/webimg/draw-3.png" alt="Drawing portrait" loading="lazy">
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-sm-6 col-md-4 col-xxl-3 p-3">
-                        <a href="./art_info.html">
-                            <div class="portrait-box">
-                                <img data-aos="flip-right" data-aos-duration="2000"
-                                    src="./asset/img/webimg/draw-4.png" alt="Drawing portrait" loading="lazy">
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-sm-6 col-md-4 col-xxl-3 p-3">
-                        <a href="./art_info.html">
-                            <div class="portrait-box">
-                                <img data-aos="flip-left" data-aos-duration="2000"
-                                    src="./asset/img/webimg/draw-5.png" alt="Drawing portrait" loading="lazy">
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-sm-6 col-md-4 col-xxl-3 p-3">
-                        <a href="./art_info.html">
-                            <div class="portrait-box">
-                                <img data-aos="flip-right" data-aos-duration="2000"
-                                    src="./asset/img/webimg/draw-6.png" alt="Drawing portrait" loading="lazy">
+                        <a href="{{ route('frontend.works.show', $work->id) }}" title="{{ $work->name }}">
+                            <div class="recent-img-box"
+                                data-aos="{{ $index % 2 == 0 ? 'zoom-out-right' : 'zoom-out-left' }}"
+                                data-aos-duration="1500">
+                                <img class="img-thumb" src="{{ asset($work->work_image_low) }}" alt="{{ $work->name }}" loading="lazy">
+                                <img class="recent-img-hover img-left" src="{{ asset($work->image_left_low) }}" alt="{{ $work->name }}" loading="lazy">
+                                <img class="recent-img-hover img-right" src="{{ asset($work->image_right_low) }}" alt="{{ $work->name }}" loading="lazy">
                             </div>
                         </a>
                     </div>
                 </div>
+            </div>
+            @endforeach
+            @if($Works->isEmpty())
+                <p class="text-muted text-center">No works available in the shop yet.</p>
+            @endif
+            <div class="pagination justify-content-center mt-4">
+                {{ $Works->links() }}
             </div>
         </section>
         <!-- shop page end -->

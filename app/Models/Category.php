@@ -8,7 +8,7 @@ class Category extends Model
 {
     protected $table = 'categories';
     protected $fillable = [
-        'name', 'slug', 'description', 'parent_id', 'is_active', 'category_image', 'image_left', 'image_right'
+        'name', 'slug', 'description', 'parent_id','is_vip', 'is_active', 'category_image', 'image_left', 'image_right'
     ];
 
     public function getRouteKeyName(): string
@@ -36,5 +36,10 @@ class Category extends Model
     public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function works()
+    {
+        return $this->hasMany(Work::class)->orderBy('created_at', 'desc');
     }
 }

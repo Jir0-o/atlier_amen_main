@@ -59,6 +59,29 @@
         </ul>
       </div>
     </li>
+      <li class="nav-item">
+      <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+        <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+        <span class="menu-title">Backend</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse" id="ui-basic">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ route('works.index') }}">My Work</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{route('adminAbout.index')}}">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{route('adminContract.index')}}">Contract</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{route('contact-messages.index')}}">Contract Message</a>
+          </li>
+        </ul>
+      </div>
+    </li>
     <li class="nav-item">
       <a class="nav-link" href="pages/icons/mdi.html">
         <i class="mdi mdi-contacts menu-icon"></i>

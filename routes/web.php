@@ -2,11 +2,16 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TempCartController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WorkController;
+use App\Models\Category;
+use App\Models\Work;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -16,6 +21,26 @@ Route::post('/logout', function () {
     return redirect()->route('frontend.login');
 })->name('logout')->middleware('auth');
 //frontend group
+Route::prefix('cart')->group(function () {
+    Route::get('/', [TempCartController::class, 'index'])->name('cart.index'); 
+    Route::post('/add', [TempCartController::class, 'add'])->name('cart.add');
+    Route::patch('/{tempCart}/quantity', [TempCartController::class, 'updateQuantity'])->name('cart.update');
+    Route::delete('/{tempCart}', [TempCartController::class, 'destroy'])->name('cart.destroy');
+    Route::delete('/clear/all', [TempCartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/sync', [TempCartController::class, 'syncGuestCartStorage'])->name('cart.sync');
+    Route::post('/cart/merge', [TempCartController::class, 'mergeGuestCartToUser'])->name('cart.merge');
+    Route::get('/cart/count', [TempCartController::class, 'count'])->name('cart.count');
+});
+
+Route::get('/works/json/{work}', function (Work $work) {
+    return response()->json([
+        'id'               => $work->id,
+        'name'             => $work->name,
+        'price'            => $work->price,
+        'work_image_low'   => $work->work_image_low,
+    ]);
+})->name('works.json');
+
 Route::prefix('frontend')->group(function () {
 
     //resource routes
@@ -30,6 +55,9 @@ Route::prefix('frontend')->group(function () {
     Route::get('/password/reset', [FrontendController::class, 'resetPassword'])->middleware('guest')->name('frontend.password.request');
     Route::get('/about', [FrontendController::class, 'about'])->name('about');
     Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
+    Route::get('/workShow/{work}', [WorkController::class, 'workShow'])->name('frontend.works.show');
+    
+
 
     Route::post('/register/store', [UserController::class, 'store'])
         ->middleware('guest')
@@ -43,6 +71,10 @@ Route::prefix('frontend')->group(function () {
     Route::get('/works/{category:slug}', [CategoryController::class, 'category'])
         ->name('works.category');
 
+    Route::get('/search/live', [CategoryController::class, 'liveSearch'])->name('search.live');
+
+
+
 });
 
 Route::get('/dashboard', function () {
@@ -55,7 +87,21 @@ Route::middleware('auth')->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::resource('adminAbout', AboutController::class);
     Route::resource('adminContract', ContractController::class);
+    Route::resource('works', WorkController::class);
 
+    // gallery delete
+    Route::delete('works/gallery/{id}', [WorkController::class, 'deleteGalleryImage'])->name('works.gallery.delete');
+
+    //category make VIP
+    Route::put('categories/{id}/make-vip', [CategoryController::class, 'makeVip'])->name('categories.make-vip');
+
+    //work toggle feature
+    Route::put('works/toggle-feature/{work}', [WorkController::class, 'toggleFeature'])->name('works.toggleFeature');
+
+    //checkout routes
+    Route::get('/checkout',  [CheckoutController::class, 'show'])->name('checkout.form');
+    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+    
     Route::get('/admin/contact-messages', [ContractController::class, 'Adminindex'])->name('contact-messages.index');
     Route::get('/admin/contact-messages/{id}', [ContractController::class, 'Adminshow'])->name('contact-messages.show');
     Route::delete('/admin/contact-messages/{id}', [ContractController::class, 'Admindestroy'])->name('contact-messages.destroy');

@@ -28,6 +28,7 @@
                                         <th>Category Image</th>
                                         <th>Left Image</th>
                                         <th>Right Image</th>
+                                        <th>VIP Status</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -87,6 +88,11 @@
                                     <img id="preview_image_right" src="" alt="" style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;">
                                 </div>
                             </div>
+                            <div class="mb-3">
+                                <input type="checkbox" name="vip" id="is_vip" class="form-check-input">
+                                <label for="is_vip" class="form-check-label">Is VIP</label>
+                                <span class="text-danger error-text is_vip_error"></span>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -127,6 +133,7 @@ $(document).ready(function () {
             { data: 'category_image', name: 'category_image', orderable: false, searchable: false },
             { data: 'image_left', name: 'image_left', orderable: false, searchable: false },
             { data: 'image_right', name: 'image_right', orderable: false, searchable: false },
+            { data: 'vip', name: 'vip', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ]
     });
@@ -246,6 +253,33 @@ $(document).ready(function () {
                     },
                     error: function () {
                         Swal.fire('Error', 'Failed to delete', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // Make VIP
+    $('body').on('click', '.make-vip', function () {
+        let id = $(this).data('id');
+        Swal.fire({
+            title: 'Make VIP?',
+            text: 'This will promote the category to VIP status. Your previous VIP category will be changed.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Make VIP'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ url('categories') }}/" + id + "/make-vip",
+                    type: 'POST',
+                    data: {_method: 'PUT', _token: '{{ csrf_token() }}'},
+                    success: function (resp) {
+                        Swal.fire('Success', resp.message, 'success');
+                        table.ajax.reload();
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Failed to update category', 'error');
                     }
                 });
             }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\About;
 use App\Models\Category;
 use App\Models\Contract;
+use App\Models\Work;
 use COM;
 use Illuminate\Http\Request;
 
@@ -15,25 +16,37 @@ class FrontendController extends Controller
      */
     public function index()
     {
-        $categories = Category::where('is_active', true)->get();
+        $categories = Category::where('is_active', true)->where('is_vip', false)->latest()->get();
         //recently added 2 categories
-        $recentCategories = Category::where('is_active', true)->latest()->take(2)->get();
-        return view('frontend.home.index', compact('categories', 'recentCategories'));
+        $recentWorks = Work::where('is_active', true)->latest()->take(2)->get();
+        $featuredWorks = Work::where('is_featured', 1)
+        ->latest()
+        ->take(8) 
+        ->get();
+        return view('frontend.home.index', compact('categories', 'recentWorks', 'featuredWorks'));
     }
 
     public function shop()
     {
-        return view('frontend.purchase.shop');
+        $Works = Work::where('is_active', true)->latest()->paginate(10);
+        return view('frontend.purchase.shop', compact('Works'));
     }
 
     public function exhibition()
     {
-        return view('frontend.art-info.exhibition');
+        $categories = Category::where('is_active', true)->where('is_vip', true)->latest()->get();
+        $vipWorks = Work::where('is_active', true)->where('category_id', '=', $categories[0]->id)->latest()->paginate(10);
+        
+        return view('frontend.works.vip_exhibition', compact('categories', 'vipWorks'));
     }
 
     public function cart()
     {
-        return view('frontend.purchase.cart');
+        $featuredWorks = Work::where('is_featured', 1)
+        ->latest()
+        ->take(8)
+        ->get();
+        return view('frontend.purchase.cart', compact('featuredWorks'));
     }
 
     public function login()

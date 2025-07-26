@@ -18,6 +18,7 @@ return new class extends Migration
             $table->longText('body')->nullable();
             $table->string('image_path')->nullable();
             $table->string('image_alt')->nullable(); 
+            $table->integer('is_vip')->default(0);
             $table->boolean('is_active')->default(true); 
             $table->timestamp('published_at')->nullable();   
             $table->timestamps();                      

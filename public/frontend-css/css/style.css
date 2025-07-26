@@ -181,6 +181,61 @@ main {
 .nav-link.active .shape-nav {
     width: 100%;
 }
+
+.search-cat-list li {
+    z-index: 1;
+    padding: 12px 8px;
+    position: relative;
+    font-weight: var(--fw-md);
+    border-bottom: 1px solid #ccc;
+}
+
+.search-cat-list li::before, .search-cat-list li::after {
+    width: 0%;
+    z-index: -1;
+    content: "";
+    position: absolute;
+    transition: 500ms all ease;
+    background-color: var(--primary);
+}
+
+.search-cat-list li::before {
+    left: 0;
+    top: 50%;
+    bottom: 0;
+}
+
+.search-cat-list li::after {
+    top: 0;
+    right: 0;
+    bottom: 50%;
+}
+
+.search-cat-list li:hover {
+    color: var(--color);
+}
+
+.search-cat-list li:hover::before, .search-cat-list li:hover::after {
+    width: 100%;
+}
+
+.modal-serach-result a {
+    color: var(--primary);
+    transition: 300ms all ease;
+    font-weight: var(--fw-bold);
+}
+
+.modal-serach-result a:hover {
+    color: #5a6bff;
+    transition: 500ms all ease;
+    background-color: #f1f1f1;
+}
+
+.search-img {
+    width: 100%;
+    object-fit: cover;
+    aspect-ratio: var(--ratio-vertical);
+}
 /* nav css end */
 
 /* landing section css start */
@@ -358,6 +413,13 @@ main {
 /* home page css end */
 
 /* art info page start */
+.indi-img-box video {
+    width: 100%;
+    object-fit: cover;
+    border-radius: var(--curve-sm);
+    aspect-ratio: var(--ratio-vertical);
+}
+
 .indi-img-box img {
     width: 100%;
     object-fit: cover;
