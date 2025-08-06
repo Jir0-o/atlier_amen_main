@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('work_variant_id')->constrained('work_variants')->cascadeOnDelete();
             $table->foreignId('attribute_value_id')->constrained('attribute_values')->cascadeOnDelete();
-            $table->unique(['work_variant_id', 'attribute_value_id']);
+            $table->unique(['work_variant_id', 'attribute_value_id'], 'work_variant_attr_val_unique');
         });
     }
 

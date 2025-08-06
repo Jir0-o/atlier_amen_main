@@ -15,6 +15,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->integer('is_vip')->default(0);
             $table->timestamps();
 
             // Foreign key for parent category
