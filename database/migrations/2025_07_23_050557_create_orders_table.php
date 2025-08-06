@@ -35,6 +35,7 @@ return new class extends Migration
             $table->string('bill_state')->nullable();
             $table->string('bill_zip')->nullable();
             $table->string('bill_country');
+            $table->string('status')->default('pending');
 
             $table->timestamps();
         });

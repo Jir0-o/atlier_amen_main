@@ -27,8 +27,8 @@
                                     <th>Work Image</th>
                                     <th>Left</th>
                                     <th>Right</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
+                                    {{-- <th>Price</th>
+                                    <th>Quantity</th> --}}
                                     <th>Tags</th>
                                     <th>Featured</th>
                                     <th>Status</th>
@@ -148,19 +148,59 @@
                                 </div>
                             </div>
 
-                            {{-- product Price --}}
-                            <div class="col-md-6">
-                                <label class="form-label" for="work_price">Price</label>
+                            {{-- Fallback Base Price --}}
+                            {{-- <div class="col-md-6">
+                                <label class="form-label" for="work_price">Base Price (if no variants)</label>
                                 <input type="number" name="price" id="work_price" class="form-control" step="0.01" min="0">
                                 <span class="text-danger error-text price_error"></span>
-                            </div>
+                            </div> --}}
 
-                            {{-- Product Quantity --}}
-                            <div class="col-md-6">
-                                <label class="form-label" for="work_quantity">Quantity</label>
+                            {{-- Fallback Base Quantity --}}
+                            {{-- <div class="col-md-6">
+                                <label class="form-label" for="work_quantity">Base Quantity (if no variants)</label>
                                 <input type="number" name="quantity" id="work_quantity" class="form-control" min="0">
                                 <span class="text-danger error-text quantity_error"></span>
+                            </div> --}}
+                            <hr>
+                            <h5>Attributes & Variants</h5>
+                            <p class="text-muted small">Pick multiple values per attribute. Then configure SKU / price / stock for each combination.</p>
+
+                            <div class="row g-3 mb-3" id="variant-attributes-wrapper">
+                                @php
+                                    $allAttributes = \App\Models\Attribute::with('values')->get();
+                                @endphp
+
+                                @foreach($allAttributes as $attribute)
+                                    <div class="col-md-6">
+                                        <label class="form-label">{{ $attribute->name }}</label>
+                                        <select multiple 
+                                                class="form-select variant-attribute select2-attribute" 
+                                                data-attribute-id="{{ $attribute->id }}" 
+                                                data-attribute-name="{{ $attribute->name }}"
+                                                data-attribute-slug="{{ \Illuminate\Support\Str::slug($attribute->name) }}">
+                                            @foreach($attribute->values as $val)
+                                                <option value="{{ $val->id }}" data-slug="{{ $val->slug }}">{{ $val->value }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endforeach
                             </div>
+
+                            <div class="table-responsive mb-2">
+                                <table class="table table-bordered" id="variantTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Combination</th>
+                                            <th>SKU</th>
+                                            <th style="width:120px;">Price</th>
+                                            <th style="width:120px;">Stock</th>
+                                            <th style="width:80px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <input type="hidden" name="variants" id="variants_input">
 
                             {{-- Details --}}
                             <div class="col-12">
@@ -242,6 +282,17 @@
 
                         <div class="col-12">
                             <hr>
+                            <h6>Variants</h6>
+                            <div id="view_work_variants" class="table-responsive mb-3">
+
+                            </div>
+                            <div id="view_work_total_stock" class="small text-muted"></div>
+                        </div>
+
+                        </div>
+
+                        <div class="col-12">
+                            <hr>
                             <h6>Details</h6>
                             <div id="view_work_details" class="small"></div>
                         </div>
@@ -297,8 +348,6 @@ $(function () {
             { data: 'work_image', name: 'work_image', orderable:false, searchable:false },
             { data: 'image_left', name: 'image_left', orderable:false, searchable:false },
             { data: 'image_right',name: 'image_right', orderable:false, searchable:false },
-            { data: 'price',      name: 'price' },
-            { data: 'quantity',   name: 'quantity' },
             { data: 'tags',       name: 'tags' },
             { data: 'featured',   name: 'featured', orderable:false, searchable:false },
             { data: 'is_active',  name: 'is_active', orderable:false, searchable:false },
@@ -327,12 +376,252 @@ $(function () {
         $('.modal-title', '#workModal').text('Add Work');
         $('#workModal').modal('show');
     });
+    // --- SELECT2 INIT ---
+    function initAttributeSelects() {
+        $('.select2-attribute').each(function () {
+            if (!$(this).data('select2')) {
+                $(this).select2({
+                    placeholder: 'Select ' + $(this).data('attribute-name'),
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'bootstrap-5', // adjust if your admin template uses another style or omit
+                    dropdownParent: $('#workModal')
+                });
+            }
+        });
+    }
+
+    // Cartesian product
+    function cartesian(arrays) {
+        if (!arrays.length) return [];
+        return arrays.reduce((a, b) => a.flatMap(d => b.map(e => [...d, e])), [[]]);
+    }
+
+    // Build variant rows
+    function buildVariantsTable(workName = '') {
+        const groups = [];
+        $('.variant-attribute').each(function () {
+            const attrName = $(this).data('attribute-name');
+            const selected = $(this).select2('data') || [];
+            if (!selected.length) return;
+
+            const values = selected.map(opt => ({
+                id: opt.id,
+                value: opt.text,
+                slug: $(this).find(`option[value="${opt.id}"]`).data('slug') || opt.text.toLowerCase().replace(/\s+/g,'-'),
+                attribute_name: attrName,
+            }));
+            groups.push(values);
+        });
+
+        const combinations = groups.length ? cartesian(groups) : [];
+        const $tbody = $('#variantTable tbody');
+
+        // preserve existing user input
+        const existingMap = {};
+        $tbody.find('tr').each(function () {
+            const key = $(this).data('combo-key');
+            existingMap[key] = {
+                price: $(this).find('.variant-price').val(),
+                stock: $(this).find('.variant-stock').val(),
+                sku: $(this).find('.variant-sku').val(),
+            };
+        });
+
+        $tbody.empty();
+
+        if (!combinations.length) {
+            syncVariantsInput();
+            return;
+        }
+
+        combinations.forEach(combo => {
+            // group by attribute for display
+            const grouped = combo.reduce((acc, cur) => {
+                if (!acc[cur.attribute_name]) acc[cur.attribute_name] = [];
+                acc[cur.attribute_name].push(cur.value);
+                return acc;
+            }, {});
+            const comboText = Object.entries(grouped)
+                .map(([attr, vals]) => `${attr}: ${vals.join(', ')}`)
+                .join(' / ');
+
+            // combo key using slugs
+            const slugParts = combo.map(c => c.slug);
+            const comboKey = slugParts.join('|');
+
+            // default SKU
+            let baseSku = workName.toString().toLowerCase().trim()
+                .replace(/[^a-z0-9]+/g,'-')
+                .replace(/^-+|-+$/g,'');
+            if (!baseSku) baseSku = 'variant';
+            const combinationSlug = slugParts.join('-');
+            const defaultSku = baseSku + (combinationSlug ? '-' + combinationSlug : '');
+
+            const preserved = existingMap[comboKey] || {};
+            const priceVal = preserved.price || '';
+            const stockVal = preserved.stock || '';
+            const skuVal = preserved.sku || defaultSku;
+
+            const row = `
+                <tr data-attribute-value-ids='${JSON.stringify(combo.map(c => c.id))}' data-combo-key="${comboKey}">
+                    <td>${comboText}</td>
+                    <td><input type="text" class="form-control form-control-sm variant-sku" value="${skuVal}" /></td>
+                    <td><input type="number" min="0" step="0.01" class="form-control form-control-sm variant-price" value="${priceVal}" /></td>
+                    <td><input type="number" min="0" class="form-control form-control-sm variant-stock" value="${stockVal}" /></td>
+                    <td><button type="button" class="btn btn-sm btn-danger remove-variant">&times;</button></td>
+                </tr>
+            `;
+            $tbody.append(row);
+        });
+
+        syncVariantsInput();
+    }
+
+    // Sync hidden input
+    function syncVariantsInput() {
+        const variants = [];
+        $('#variantTable tbody tr').each(function () {
+            const attrValueIds = $(this).data('attribute-value-ids') || [];
+            const sku = $(this).find('.variant-sku').val();
+            const price = $(this).find('.variant-price').val();
+            const stock = $(this).find('.variant-stock').val();
+            if (!attrValueIds.length) return;
+            variants.push({
+                attribute_value_ids: attrValueIds,
+                sku: sku,
+                price: price,
+                stock: stock,
+            });
+        });
+        $('#variants_input').val(JSON.stringify(variants));
+    }
+
+    // Remove variant row
+    $(document).on('click', '.remove-variant', function () {
+        $(this).closest('tr').remove();
+        syncVariantsInput();
+    });
+
+    // Rebuild when attributes change
+    $(document).on('change', '.variant-attribute', function () {
+        const workName = $('#work_name').val() || '';
+        buildVariantsTable(workName);
+    });
+
+    // Rebuild when work name changes (to update SKU base)
+    $('#work_name').on('input', function () {
+        const workName = $(this).val();
+        buildVariantsTable(workName);
+    });
+
+    // Keep hidden input in sync when editing inputs
+    $(document).on('input change', '.variant-price, .variant-stock, .variant-sku', function () {
+        syncVariantsInput();
+    });
+
+    // Populate existing variant data on edit
+    function populateVariantsOnEdit(payload) {
+        if (!payload.variants) return;
+
+        // Build map of attribute_id => Set of value ids used across all variants
+        const attrValuesMap = {}; // attribute_id -> Set
+        payload.variants.forEach(v => {
+            if (Array.isArray(v.attribute_values)) {
+                v.attribute_values.forEach(av => {
+                    if (!attrValuesMap[av.attribute_id]) {
+                        attrValuesMap[av.attribute_id] = new Set();
+                    }
+                    attrValuesMap[av.attribute_id].add(av.id);
+                });
+            } else if (Array.isArray(v.attribute_value_ids)) {
+                // fallback: we don't know attribute_id here, so can't assign to specific select
+                v.attribute_value_ids.forEach(avId => {
+                    // nothing to do in this fallback
+                });
+            }
+        });
+
+        // Set each attribute multi-select with the aggregated values
+        $('.variant-attribute').each(function () {
+            const attrId = $(this).data('attribute-id');
+            const valuesSet = attrValuesMap[attrId];
+            if (valuesSet) {
+                const valuesArray = Array.from(valuesSet);
+                $(this).val(valuesArray).trigger('change');
+            } else {
+                // clear if none
+                $(this).val(null).trigger('change');
+            }
+        });
+
+        // Rebuild table based on selected attributes and current work name
+        const workName = $('#work_name').val() || '';
+        buildVariantsTable(workName);
+
+        // Fill in existing variant fields
+        payload.variants.forEach(v => {
+            // derive comboKey (slugs) – prefer attribute_values if present
+            let slugs = [];
+            if (Array.isArray(v.attribute_values)) {
+                slugs = v.attribute_values.map(av => av.slug);
+            } else if (Array.isArray(v.attribute_value_ids)) {
+                slugs = v.attribute_value_ids.map(id => {
+                    const opt = $(`.variant-attribute option[value="${id}"]`);
+                    return opt.data('slug') || '';
+                }).filter(Boolean);
+            }
+            const comboKey = slugs.join('|');
+            const row = $(`#variantTable tbody tr[data-combo-key="${comboKey}"]`);
+            if (row.length) {
+                row.find('.variant-price').val(v.price);
+                row.find('.variant-stock').val(v.stock);
+                row.find('.variant-sku').val(v.sku);
+            }
+        });
+
+        // Sync hidden input
+        syncVariantsInput();
+    }
+
+
+    $(document).on('shown.bs.modal', '#workModal', function () {
+        initAttributeSelects();
+    });
+    $('#work_name').on('input', function () {
+        const workName = $(this).val();
+        buildVariantsTable(workName);
+    });
+
+    function showErrors(errors) {
+        // clear previous
+        $('.error-text').text('');
+        $('#variant_errors').text('');
+
+        Object.entries(errors).forEach(([key, msgs]) => {
+            const message = Array.isArray(msgs) ? msgs[0] : msgs;
+            if (key.startsWith('variants')) {
+
+                const humanKey = key.replace(/\./g, ' ');
+                $('#variant_errors').append(`<div>${humanKey}: ${message}</div>`);
+            } else {
+                const safe = key.replace(/\./g, '_');
+                const selector = `.${safe}_error`;
+                if ($(selector).length) {
+                    $(selector).text(message);
+                } else {
+                    console.warn('Unmapped error field', key, message);
+                }
+            }
+        });
+    }
 
     // Edit Work
     $('body').on('click', '.editWorkBtn', function(){
         const id = $(this).data('id');
         resetWorkForm();
         $('.modal-title', '#workModal').text('Edit Work');
+
         $.get("{{ url('works') }}/" + id + "/edit", function(data){
             $('#work_id').val(data.id);
             $('#work_category_id').val(data.category_id);
@@ -340,7 +629,8 @@ $(function () {
             $('#work_date').val(data.work_date);
             $('#work_tags').val(data.tags);
             $('#work_details').val(data.details);
-            $('#work_is_active').prop('checked', data.is_active);
+            // is_active is a select
+            $('#work_is_active').val(data.is_active);
 
             // main previews
             if (data.work_image_url) {
@@ -352,9 +642,6 @@ $(function () {
             if (data.image_right_url) {
                 $('#preview_work_image_right').attr('src', data.image_right_url).show();
             }
-            //image price
-            $('#work_price').val(data.work_price || '');
-            $('#work_quantity').val(data.work_quantity || '');
 
             // existing gallery thumbs
             if (data.gallery && data.gallery.length) {
@@ -362,18 +649,23 @@ $(function () {
                 const $list = $('#existing_gallery_list').empty();
                 data.gallery.forEach(function(g){
                     $list.append(`
-                        <div class=\"position-relative d-inline-block\">
-                            <img src=\"${g.image_url}\" class=\"img-thumbnail\" style=\"max-width:80px;\">
-                            <button type=\"button\" class=\"btn btn-sm btn-danger position-absolute top-0 end-0 deleteGalleryImgBtn\" data-id=\"${g.id}\" title=\"Delete\">×</button>
+                        <div class="position-relative d-inline-block">
+                            <img src="${g.image_url}" class="img-thumbnail" style="max-width:80px;">
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 deleteGalleryImgBtn" data-id="${g.id}" title="Delete">×</button>
                         </div>`);
                 });
             } else {
                 $('#existing_gallery_wrapper').hide();
             }
 
+            initAttributeSelects();
+
+            populateVariantsOnEdit(data);
+
             $('#workModal').modal('show');
         });
     });
+
 
     // View Work
     $('body').on('click', '.viewWorkBtn', function(){
@@ -388,21 +680,75 @@ $(function () {
             $('#view_work_name').text(data.name);
             $('#view_work_date').text(data.work_date || '—');
             $('#view_work_tags').text(data.tags || '—');
-            $('#view_work_status').html(data.is_active ? '<span class=\"badge bg-success\">Active</span>' : '<span class=\"badge bg-secondary\">Inactive</span>');
+            $('#view_work_status').html(data.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>');
             $('#view_work_created').text(data.created_at || '—');
             $('#view_work_updated').text(data.updated_at || '—');
             $('#view_work_details').html(data.details || '<em>No details.</em>');
+
+            // Variants
+            const $variantContainer = $('#view_work_variants').empty();
+            let totalStock = 0;
+            if (data.variants && data.variants.length) {
+                let rows = '';
+                data.variants.forEach(v => {
+                    totalStock += parseInt(v.stock || 0, 10);
+                    // combination_text already human readable
+                    rows += `
+                        <tr>
+                            <td>${escapeHtml(v.combination_text)}</td>
+                            <td>${escapeHtml(v.sku)}</td>
+                            <td>${v.price !== null ? parseFloat(v.price).toFixed(2) : '—'}</td>
+                            <td>${v.stock !== null ? v.stock : '—'}</td>
+                        </tr>
+                    `;
+                });
+
+                const table = `
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Combination</th>
+                                <th>SKU</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                `;
+                $variantContainer.html(table);
+                $('#view_work_total_stock').text(`Total stock across variants: ${totalStock}`);
+            } else {
+                // fallback to base price/quantity if no variants
+                $variantContainer.html('<div><em>No variants. Showing base price/quantity if available.</em></div>');
+            }
+
+            // Gallery
             const $vwGal = $('#view_work_gallery').empty();
             if (data.gallery && data.gallery.length){
                 data.gallery.forEach(g=>{
-                    $vwGal.append(`<img src=\"${g.url}\" class=\"img-thumbnail preview-img\" data-src=\"${g.url}\" style=\"max-width:100px;cursor:pointer;\">`);
+                    $vwGal.append(`<img src="${g.url}" class="img-thumbnail preview-img" data-src="${g.url}" style="max-width:100px;cursor:pointer;">`);
                 });
             } else {
                 $vwGal.html('<em>No gallery images.</em>');
             }
+
+            $('#viewWorkModal').modal('show');
         });
-        $('#viewWorkModal').modal('show');
     });
+
+
+    function escapeHtml(str) {
+        if (typeof str !== 'string') return str;
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
     // Delete Work
     $('body').on('click', '.deleteWorkBtn', function(){
@@ -485,14 +831,13 @@ $(function () {
     // Save Work (create/update)
     $('#workForm').submit(function(e){
         e.preventDefault();
+        syncVariantsInput();
+
         $('#workSaveBtn').text('Saving...').prop('disabled', true);
         $('.error-text').text('');
+        $('#variant_errors').text('');
 
         let formData = new FormData(this);
-        // is_active toggle (checkbox unchecked won't post)
-        if (!$('#work_is_active').is(':checked')) {
-            formData.set('is_active', '0');
-        }
 
         $.ajax({
             url: "{{ route('works.store') }}",
@@ -510,10 +855,8 @@ $(function () {
             error: function(xhr){
                 $('#workSaveBtn').text('Save').prop('disabled', false);
                 if(xhr.status === 422){
-                    let errors = xhr.responseJSON.errors;
-                    $.each(errors, function(key,val){
-                        $('.'+key+'_error').text(val[0]);
-                    });
+                    let errors = xhr.responseJSON.errors || {};
+                    showErrors(errors);
                     Swal.fire('Validation Error','Please fix the highlighted fields.','error');
                 } else {
                     Swal.fire('Error','Something went wrong.','error');
@@ -521,6 +864,7 @@ $(function () {
             }
         });
     });
+
 
     // Confirm + delete helper
     function confirmDeleteWork(id){
@@ -556,6 +900,14 @@ $(function () {
         $('#work_gallery_preview').empty();
         $('#existing_gallery_wrapper').hide();
         $('#work_is_active').prop('checked', true);
+        //reset variants
+        $('#variants').empty();
+        $('#variant_errors').text('');
+        $('#variant_name').val('');
+        $('#variant_price').val('');
+        $('#variant_sku').val('');
+        $('#variant_quantity').val('');
+        
     }
 
     // Clear view modal

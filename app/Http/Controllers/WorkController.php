@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttributeValue;
 use App\Models\Work;
 use App\Models\WorkGallery;
 use App\Models\Category;
+use App\Models\WorkVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
@@ -78,10 +81,29 @@ class WorkController extends Controller
      */
     public function edit($id)
     {
-        $work = Work::with('gallery')->findOrFail($id);
+        $work = Work::with(['gallery', 'variants.attributeValues.attribute'])->findOrFail($id);
+
+        $variants = $work->variants()->with('attributeValues.attribute')->get()->map(function ($variant) {
+            return [
+                'id' => $variant->id,
+                'sku' => $variant->sku,
+                'price' => $variant->price,
+                'stock' => $variant->stock,
+                'attribute_value_ids' => $variant->attributeValues->pluck('id')->values()->all(),
+                'attribute_values' => $variant->attributeValues->map(fn($av) => [
+                    'id' => $av->id,
+                    'value' => $av->value,
+                    'slug' => $av->slug,
+                    'attribute_id' => $av->attribute_id,
+                    'attribute_name' => $av->attribute?->name,
+                ])->values()->all(),
+                'combination_text' => $variant->combinationText(),
+            ];
+        });
 
         return response()->json([
             'id'                => $work->id,
+            'variants'          => $variants,
             'category_id'       => $work->category_id,
             'name'              => $work->name,
             'work_date'         => optional($work->work_date)->format('Y-m-d'),
@@ -99,6 +121,7 @@ class WorkController extends Controller
                                     ])->values(),
         ]);
     }
+
 
     protected function saveImageVariants(\Illuminate\Http\UploadedFile $file, string $fullDir, string $lowDir, string $prefix): array
     {
@@ -186,13 +209,14 @@ class WorkController extends Controller
             'details'          => ['nullable','string'],
             'is_active'        => ['required','in:0,1'],
             'art_video'        => ['nullable','mimetypes:video/mp4,video/ogg,video/webm','max:51200'],
-            'price'            => ['nullable','numeric','min:0'],
-            'quantity'         => ['nullable','integer','min:0'],
             'work_image'       => [$workId ? 'nullable' : 'required','image','mimes:jpg,jpeg,png,webp','max:4096'],
             'image_left'       => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
             'image_right'      => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
-
             'gallery_images.*' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
+
+            // fallback top-level price/quantity (used only if no variants)
+            'price'            => ['nullable','numeric','min:0'],
+            'quantity'         => ['nullable','integer','min:0'],
         ];
 
         $validated = $request->validate($rules);
@@ -215,79 +239,139 @@ class WorkController extends Controller
             $work->work_date   = $validated['work_date'] ?? null;
             $work->tags        = $validated['tags'] ?? null;
             $work->details     = $validated['details'] ?? null;
+            $work->is_active   = $validated['is_active'];
 
-            // is_active: create=1, update=checkbox
-            if ($workId) {
-                $work->is_active = $request->has('is_active') ? 1 : 0;
-            } else {
-                $work->is_active = 1;
-            }
-
-            /* ------- Main Work Image ------- */
+            // Images/video handling (same as before)
             if ($request->hasFile('work_image')) {
                 $this->deleteIfExists($work->work_image);
                 $this->deleteIfExists($work->work_image_low);
-
-                $paths = $this->saveImageVariants(
-                    $request->file('work_image'),
-                    $fullDir,
-                    $lowDir,
-                    'work'
-                );
+                $paths = $this->saveImageVariants($request->file('work_image'), $fullDir, $lowDir, 'work');
                 $work->work_image     = $paths['full'];
                 $work->work_image_low = $paths['low'];
             }
 
-            /* ------- Left Image ------- */
             if ($request->hasFile('image_left')) {
                 $this->deleteIfExists($work->image_left);
                 $this->deleteIfExists($work->image_left_low);
-
-                $paths = $this->saveImageVariants(
-                    $request->file('image_left'),
-                    $fullDir,
-                    $lowDir,
-                    'left'
-                );
+                $paths = $this->saveImageVariants($request->file('image_left'), $fullDir, $lowDir, 'left');
                 $work->image_left     = $paths['full'];
                 $work->image_left_low = $paths['low'];
             }
 
-            /* ------- Right Image ------- */
             if ($request->hasFile('image_right')) {
                 $this->deleteIfExists($work->image_right);
                 $this->deleteIfExists($work->image_right_low);
-
-                $paths = $this->saveImageVariants(
-                    $request->file('image_right'),
-                    $fullDir,
-                    $lowDir,
-                    'right'
-                );
+                $paths = $this->saveImageVariants($request->file('image_right'), $fullDir, $lowDir, 'right');
                 $work->image_right     = $paths['full'];
                 $work->image_right_low = $paths['low'];
             }
 
-            
-            // Art Video
             if ($request->hasFile('art_video')) {
                 $this->deleteIfExists($work->art_video);
-
-                $path = $request
-                    ->file('art_video')
-                    ->store($videoDir, 'public');
-
+                $path = $request->file('art_video')->store($videoDir, 'public');
                 $work->art_video = $path;
             }
-            /* ------- Work Price & Quantity ------- */
+
+            // Assign fallback price/quantity for now; may get cleared if variants exist
             $work->price    = $validated['price'] ?? null;
             $work->quantity = $validated['quantity'] ?? null;
 
             $work->save();
 
-            /* ------- Gallery (append) ------- */
+            // ---- VARIANTS PROCESSING ----
+            $variantsPayload = json_decode($request->input('variants', '[]'), true) ?: [];
+
+            // Validate variantsPayload manually
+            $variantErrors = [];
+            if (is_array($variantsPayload)) {
+                foreach ($variantsPayload as $idx => $v) {
+                    // attribute_value_ids
+                    if (empty($v['attribute_value_ids']) || !is_array($v['attribute_value_ids'])) {
+                        $variantErrors["variants.$idx.attribute_value_ids"] = ['At least one attribute value must be selected.'];
+                    } else {
+                        $count = AttributeValue::whereIn('id', $v['attribute_value_ids'])->count();
+                        if ($count !== count($v['attribute_value_ids'])) {
+                            $variantErrors["variants.$idx.attribute_value_ids"] = ['Some attribute values are invalid.'];
+                        }
+                    }
+
+                    // price
+                    if (!isset($v['price']) || !is_numeric($v['price']) || $v['price'] < 0) {
+                        $variantErrors["variants.$idx.price"] = ['Price must be a number >= 0.'];
+                    }
+
+                    // stock
+                    if (!isset($v['stock']) || !is_numeric($v['stock']) || intval($v['stock']) < 0) {
+                        $variantErrors["variants.$idx.stock"] = ['Stock must be an integer >= 0.'];
+                    }
+
+                    // sku (optional)
+                    if (isset($v['sku']) && !is_string($v['sku'])) {
+                        $variantErrors["variants.$idx.sku"] = ['SKU must be a string.'];
+                    }
+                }
+            } else {
+                // if it's not array, ignore (no variants)
+                $variantsPayload = [];
+            }
+
+            if (!empty($variantErrors)) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Validation Error',
+                    'errors' => $variantErrors,
+                ], 422);
+            }
+
+            // Delete existing variants to simplify update
+            if ($work->variants()->exists()) {
+                foreach ($work->variants as $oldVariant) {
+                    $oldVariant->attributeValues()->detach();
+                    $oldVariant->delete();
+                }
+            }
+
+            if (count($variantsPayload) > 0) {
+                foreach ($variantsPayload as $v) {
+                    $attrValIds = $v['attribute_value_ids'] ?? [];
+                    sort($attrValIds); // deterministic
+
+                    // SKU generation
+                    $baseSku = Str::slug($work->name) ?: 'variant';
+                    $valueSlugs = AttributeValue::whereIn('id', $attrValIds)->pluck('slug')->toArray();
+                    $combinationSlug = implode('-', $valueSlugs);
+                    $sku = $v['sku'] ?? ($baseSku . ($combinationSlug ? '-' . $combinationSlug : ''));
+
+                    // ensure unique SKU
+                    $originalSku = $sku;
+                    $i = 1;
+                    while (WorkVariant::where('sku', $sku)->exists()) {
+                        $sku = $originalSku . '-' . $i++;
+                    }
+
+                    $variant = WorkVariant::create([
+                        'work_id' => $work->id,
+                        'sku'     => $sku,
+                        'price'   => $v['price'],
+                        'stock'   => $v['stock'],
+                    ]);
+
+                    if (!empty($attrValIds)) {
+                        $variant->attributeValues()->attach($attrValIds);
+                    }
+                }
+
+                // clear top-level price/quantity because variants are authoritative
+                $work->price = null;
+                $work->quantity = null;
+                $work->saveQuietly();
+            } else {
+                // no variants: the fallback variant is already covered by earlier logic (you could optionally create a default variant here if your system relies on WorkVariant)
+            }
+
+            // Gallery (append)
             if ($request->hasFile('gallery_images')) {
-                $sortBase = (int) WorkGallery::where('work_id',$work->id)->max('sort_order');
+                $sortBase = (int) WorkGallery::where('work_id', $work->id)->max('sort_order');
 
                 foreach ($request->file('gallery_images') as $idx => $img) {
                     $paths = $this->saveImageVariants($img, $galFull, $galLow, 'gal');
@@ -295,7 +379,7 @@ class WorkController extends Controller
                     WorkGallery::create([
                         'work_id'        => $work->id,
                         'image_path'     => $paths['full'],
-                        'image_path_low' => $paths['low'], // make sure column exists
+                        'image_path_low' => $paths['low'],
                         'sort_order'     => $sortBase + $idx + 1,
                     ]);
                 }
@@ -307,12 +391,9 @@ class WorkController extends Controller
                 'status'  => 'success',
                 'message' => $workId ? 'Work updated.' : 'Work created.',
             ]);
-
         } catch (\Throwable $e) {
             DB::rollBack();
-
-            report($e); // logs error
-
+            report($e);
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Failed to save Work.',
@@ -419,7 +500,22 @@ class WorkController extends Controller
      */
     public function show($id)
     {
-        $work = Work::with('category','gallery')->findOrFail($id);
+        $work = Work::with(['category', 'gallery', 'variants.attributeValues.attribute'])->findOrFail($id);
+
+        $variants = $work->variants->map(function ($variant) {
+            return [
+                'id' => $variant->id,
+                'sku' => $variant->sku,
+                'price' => $variant->price,
+                'stock' => $variant->stock,
+                'combination_text' => $variant->combinationText(),
+                'attribute_values' => $variant->attributeValues->map(fn($av) => [
+                    'id' => $av->id,
+                    'value' => $av->value,
+                    'attribute_name' => $av->attribute?->name,
+                ])->values()->all(),
+            ];
+        });
 
         return response()->json([
             'id'            => $work->id,
@@ -438,8 +534,10 @@ class WorkController extends Controller
                                 ])->values(),
             'created_at'    => $work->created_at?->format('Y-m-d H:i'),
             'updated_at'    => $work->updated_at?->format('Y-m-d H:i'),
+            'variants'      => $variants,
         ]);
     }
+
 
     public function workShow(Work $work)
     {

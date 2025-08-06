@@ -41,6 +41,11 @@ class Work extends Model
         return $this->hasMany(WorkGallery::class)->orderBy('sort_order');
     }
 
+    public function variants()
+    {
+        return $this->hasMany(WorkVariant::class);
+    }
+
     /* Accessor Helpers */
     public function getWorkImageUrlAttribute(): string
     {

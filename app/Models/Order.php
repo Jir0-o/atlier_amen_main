@@ -16,6 +16,7 @@ class Order extends Model
         'grand_total',
         'ship_fname','ship_lname','ship_address','ship_city','ship_state','ship_zip','ship_country',
         'bill_fname','bill_lname','bill_address','bill_city','bill_state','bill_zip','bill_country',
+        'status',
     ];
 
     public function user(): BelongsTo

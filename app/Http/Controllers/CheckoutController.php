@@ -115,6 +115,7 @@ class CheckoutController extends Controller
                 'subtotal'        => $subtotal,
                 'shipping_charge' => $shippingCharge,
                 'grand_total'     => $grandTotal,
+                //
 
                 // Shipping fields
                 'ship_fname'      => $data['f_name'],

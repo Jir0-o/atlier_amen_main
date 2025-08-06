@@ -59,7 +59,7 @@
         </ul>
       </div>
     </li>
-      <li class="nav-item">
+    <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
         <i class="mdi mdi-crosshairs-gps menu-icon"></i>
         <span class="menu-title">Backend</span>
@@ -71,10 +71,13 @@
             <a class="nav-link" href="{{ route('works.index') }}">My Work</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{route('adminAbout.index')}}">About</a>
+            <a class="nav-link" href="{{route('admin.orders.index')}}">Order</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{route('adminContract.index')}}">Contract</a>
+            <a class="nav-link" href="{{route('admin.attributes.index')}}">Attribute</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{route('admin.attribute-values.index')}}">Attribute Value</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{route('contact-messages.index')}}">Contract Message</a>

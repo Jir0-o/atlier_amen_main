@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AttributeController;
+use App\Http\Controllers\AttributeValueController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TempCartController;
 use App\Http\Controllers\UserController;
@@ -88,7 +91,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('adminAbout', AboutController::class);
     Route::resource('adminContract', ContractController::class);
     Route::resource('works', WorkController::class);
-
+ 
     // gallery delete
     Route::delete('works/gallery/{id}', [WorkController::class, 'deleteGalleryImage'])->name('works.gallery.delete');
 
@@ -109,6 +112,20 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    
+    Route::prefix('admin/orders')->name('admin.orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/data', [OrderController::class, 'data'])->name('data');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show'); 
+        Route::post('/{order}/accept', [OrderController::class, 'accept'])->name('accept');
+        Route::post('/{order}/reject', [OrderController::class, 'reject'])->name('reject');
+    });
+
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('attributes', AttributeController::class);
+        Route::resource('attribute-values', AttributeValueController::class);
+    });
 });
 
 require __DIR__.'/auth.php';
