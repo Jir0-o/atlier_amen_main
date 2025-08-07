@@ -3,6 +3,13 @@
 @section('title', 'Category')
 
 @section('content')
+<style>
+    .place-bottom {
+        display: flex;
+        align-items: end;
+        height: 100%;
+    }
+</style>
     <div class="content-wrapper">
         <div class="row">
             <div class="col-md-12 grid-margin">
@@ -19,7 +26,7 @@
                     <div class="card-body">
                         <button class="btn btn-success mb-3" id="addCategoryBtn">Add Category</button>
                         <div class="table-responsive">
-                            <table id="categoryTable" class="table table-striped">
+                            <table id="categoryTable" class="table table-striped w-100">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -32,6 +39,9 @@
                                         <th>Action</th>
                                     </tr>
                                 </thead>
+                                <tbody>
+
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -41,57 +51,65 @@
 
         <!-- Modal -->
         <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Add Category</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
                     <form id="categoryForm">
                         @csrf
                         <input type="hidden" name="id" id="category_id">
                         <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Name</label>
-                                <input type="text" name="name" id="name" class="form-control">
-                                <span class="text-danger error-text name_error"></span>
-                            </div>
-                            <div class="mb-3">
-                                <label for="slug" class="form-label">Slug</label>
-                                <input type="text" name="slug" id="slug" class="form-control">
-                                <span class="text-danger error-text slug_error"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="category_image" class="form-label">Category Image</label>
-                                <input type="file" name="category_image" id="category_image" class="form-control" accept="image/*">
-                                <span class="text-danger error-text category_image_error"></span>
-                                <div class="mt-2">
-                                    <img id="preview_category_image" src="" alt="" style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;">
+                            <div class="row px-4 align-item-end justify-content-center">
+                                <div class="col-sm-12 col-md-6 col-xl-2-25 p-2 mb-2">
+                                    <label for="name" class="form-label">Name</label>
+                                    <input type="text" name="name" id="name" class="form-control">
+                                    <span class="text-danger error-text name_error"></span>
                                 </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="image_left" class="form-label">Left Image</label>
-                                <input type="file" name="image_left" id="image_left" class="form-control" accept="image/*">
-                                <span class="text-danger error-text image_left_error"></span>
-                                <div class="mt-2">
-                                    <img id="preview_image_left" src="" alt="" style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;">
+                                <div class="col-sm-6 col-md-6 col-xl-2-25 p-2 mb-2">
+                                    <label for="slug" class="form-label">Slug</label>
+                                    <input type="text" name="slug" id="slug" class="form-control">
+                                    <span class="text-danger error-text slug_error"></span>
                                 </div>
-                            </div>
 
-                            <div class="mb-3">
-                                <label for="image_right" class="form-label">Right Image</label>
-                                <input type="file" name="image_right" id="image_right" class="form-control" accept="image/*">
-                                <span class="text-danger error-text image_right_error"></span>
-                                <div class="mt-2">
-                                    <img id="preview_image_right" src="" alt="" style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;">
+                                <div class="col-sm-6 col-md-4 col-xl-2-25 p-2 mb-2">
+                                    <label for="category_image" class="form-label">Category Image</label>
+                                    <input type="file" name="category_image" id="category_image" class="form-control" accept="image/*">
+                                    <span class="text-danger error-text category_image_error"></span>
+                                    <div class="mt-2">
+                                        <img id="preview_category_image" src="" alt="" style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <input type="checkbox" name="vip" id="is_vip" class="form-check-input">
-                                <label for="is_vip" class="form-check-label">Is VIP</label>
-                                <span class="text-danger error-text is_vip_error"></span>
+
+                                <div class="col-sm-6 col-md-4 col-xl-2-25 p-2 mb-2">
+                                    <label for="image_left" class="form-label">Left Image</label>
+                                    <input type="file" name="image_left" id="image_left" class="form-control" accept="image/*">
+                                    <span class="text-danger error-text image_left_error"></span>
+                                    <div class="mt-2">
+                                        <img id="preview_image_left" src="" alt="" style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6 col-md-4 col-xl-2-25 p-2 mb-2">
+                                    <label for="image_right" class="form-label">Right Image</label>
+                                    <input type="file" name="image_right" id="image_right" class="form-control" accept="image/*">
+                                    <span class="text-danger error-text image_right_error"></span>
+                                    <div class="mt-2">
+                                        <img id="preview_image_right" src="" alt="" style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;">
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 col-md-12 col-xl-12 p-2 mb-2">
+                                    <span class="place-bottom">
+                                        <span>
+                                            <input type="checkbox" name="vip" id="is_vip">
+                                            <label for="is_vip" class="form-check-label m-0">Check, If this is for VIP exhibition</label>
+                                        </span>
+                                        <span class="text-danger error-text is_vip_error"></span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">

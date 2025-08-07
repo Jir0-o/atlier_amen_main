@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>@yield('title', 'Plus Admin')</title>
+  <title>@yield('title', 'Portfolio Admin')</title>
 
   <!-- plugins:css -->
   <link rel="stylesheet" href="{{ asset('plus-admin/vendors/mdi/css/materialdesignicons.min.css') }}">

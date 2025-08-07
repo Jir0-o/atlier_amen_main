@@ -16,9 +16,11 @@
                     </a>
                     <a href="{{ route('cart') }}" class="fs-5 me-md-3 position-relative">
                         <i class="ri-shopping-cart-2-line"></i>
-                        <span id="mini-cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
-                            {{ session('cart_count', 0) }}
-                        </span>
+                        @if(session('cart_count', 0) > 0)
+                            <span id="mini-cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-light">
+                                {{ session('cart_count') }}
+                            </span>
+                        @endif
                     </a>
                     <a href="#" class="fs-5 me-md-3">
                         <i class="ri-heart-2-line"></i>
@@ -30,7 +32,7 @@
                     @endguest
                     @auth
                         <a href="#" class="fs-5 dropdown-toggle" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="ri-user-line"></i> {{ Auth::user()->first_name ?? Auth::user()->name ?? 'Account' }}
+                            <i class="ri-user-line"></i> <span class="fs-6">{{ Auth::user()->first_name ?? Auth::user()->name ?? 'Account' }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
                             <li><a class="dropdown-item" href="{{ route('profile.show') }}">Profile</a></li>

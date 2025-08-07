@@ -7,8 +7,8 @@
           <!--change to offline or busy as needed-->
         </div>
         <div class="nav-profile-text d-flex ml-0 mb-3 flex-column">
-          <span class="font-weight-semibold mb-1 mt-2 text-center">Antonio Olson</span>
-          <span class="text-secondary icon-sm text-center">$3499.00</span>
+          <span class="font-weight-semibold mb-1 mt-2 text-center">Atlier Amen</span>
+          {{-- <span class="text-secondary icon-sm text-center">$3499.00</span> --}}
         </div>
       </a>
     </li>
@@ -16,7 +16,7 @@
       <a class="nav-link d-block" href="index.html">
         <img class="sidebar-brand-logo" src="assets/images/logo.svg" alt="" />
         <img class="sidebar-brand-logomini" src="assets/images/logo-mini.svg" alt="" />
-        <div class="small font-weight-light pt-1">Responsive Dashboard</div>
+        <div class="small font-weight-light pt-1"></div>
       </a>
       <form class="d-flex align-items-center" action="#">
         <div class="input-group">
@@ -28,7 +28,7 @@
       </form>
     </li>
     <li class="pt-2 pb-1">
-      <span class="nav-item-head">Template Pages</span>
+      <span class="nav-item-head">Quick Menu</span>
     </li>
     <li class="nav-item">
       <a class="nav-link" href="{{ route('dashboard') }}">
@@ -37,12 +37,12 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
-        <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+      <a class="nav-link" data-toggle="collapse" href="#frontend_menu" aria-expanded="false" aria-controls="frontend_menu">
+        <i class="mdi mdi-crosshairs-gps menu-icon"></i> 
         <span class="menu-title">Frontend</span>
         <i class="menu-arrow"></i>
       </a>
-      <div class="collapse" id="ui-basic">
+      <div class="collapse" id="frontend_menu">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
             <a class="nav-link" href="{{ route('categories.index') }}">Work Category</a>
@@ -60,12 +60,12 @@
       </div>
     </li>
     <li class="nav-item">
-      <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+      <a class="nav-link" data-toggle="collapse" href="#backend_menu" aria-expanded="false" aria-controls="backend_menu">
         <i class="mdi mdi-crosshairs-gps menu-icon"></i>
         <span class="menu-title">Backend</span>
         <i class="menu-arrow"></i>
       </a>
-      <div class="collapse" id="ui-basic">
+      <div class="collapse" id="backend_menu">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
             <a class="nav-link" href="{{ route('works.index') }}">My Work</a>
