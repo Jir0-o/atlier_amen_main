@@ -12,19 +12,13 @@
 </style>
     <div class="content-wrapper">
         <div class="row">
-            <div class="col-md-12 grid-margin">
-                <div class="row">
-                    <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                        <h3 class="font-weight-bold">Category</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
             <div class="col-md-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
-                        <button class="btn btn-success mb-3" id="addCategoryBtn">Add Category</button>
+                        <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                            <h3 class="font-weight-bold">Category</h3>
+                            <button class="btn btn-primary mb-3" id="addCategoryBtn">Add Category</button>
+                        </div>
                         <div class="table-responsive">
                             <table id="categoryTable" class="table table-striped w-100">
                                 <thead>

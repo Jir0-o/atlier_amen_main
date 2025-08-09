@@ -4,12 +4,7 @@
 
 @section('content')
 <div class="content-wrapper">
-    <div class="row">
-        <div class="col-md-12 grid-margin">
-            <h3 class="font-weight-bold">Contract</h3>
-        </div>
-    </div>
-
+    <h3 class="font-weight-bold">Contract</h3>
     <div class="row">
         {{-- Form --}}
         <div class="col-md-8 grid-margin stretch-card">

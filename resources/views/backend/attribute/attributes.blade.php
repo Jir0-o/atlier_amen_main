@@ -4,15 +4,12 @@
 
 @section('content')
 <div class="content-wrapper">
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h3 class="font-weight-bold">Attributes</h3>
-        </div>
-    </div>
-
     <div class="card mb-4">
         <div class="card-body">
-            <button class="btn btn-success mb-3" id="addAttributeBtn">Add Attribute</button>
+            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                <h3 class="font-weight-bold">Attributes</h3>
+                <button class="btn btn-primary mb-3" id="addAttributeBtn">Add Attribute</button>
+            </div>
             <div class="table-responsive">
                 <table id="attributeTable" class="table table-striped table-bordered">
                     <thead>

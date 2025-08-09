@@ -18,16 +18,10 @@
 
 @section('content')
 <div class="content-wrapper">
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h3 class="font-weight-bold">Attribute Values</h3>
-        </div>
-    </div>
-
     <div class="row mb-3">
         <div class="col-md-4">
             <label for="filter_attribute" class="form-label">Filter by Attribute</label>
-            <select id="filter_attribute" class="form-select">
+            <select id="filter_attribute" class="form-control">
                 <option value="">All Attributes</option>
                 @foreach($attributes as $attr)
                     <option value="{{ $attr->id }}" {{ request('attribute_id') == $attr->id ? 'selected' : '' }}>
@@ -40,8 +34,10 @@
 
     <div class="card mb-4">
         <div class="card-body">
-            <button class="btn btn-success" id="addValueBtn">Add Attribute Value</button>
-            <br><br>
+            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center pb-2">
+                <h3 class="font-weight-bold">Attribute Values</h3>
+                <button class="btn btn-primary" id="addValueBtn">Add Attribute Value</button>
+            </div>
             <div class="table-responsive">
                 <table id="attributeValueTable" class="table table-striped table-bordered">
                     <thead>

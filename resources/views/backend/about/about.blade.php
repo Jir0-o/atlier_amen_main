@@ -4,63 +4,58 @@
 
 @section('content')
 <div class="content-wrapper">
-    <div class="row">
-        <div class="col-md-12 grid-margin">
-            <div class="row">
-                <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                    <h3 class="font-weight-bold">About</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <h3 class="font-weight-bold">About</h3>
     {{-- Form + Preview --}}
     <div class="row">
-        <div class="col-md-8 grid-margin stretch-card">
+        <div class="col-md-12 grid-margin stretch-card">
             <div class="card">
                 <div class="card-body">
                     <form id="aboutForm" action="{{ route('adminAbout.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        {{-- Title --}}
-                        <div class="mb-3">
-                            <label for="about_title" class="form-label">Title</label>
-                            <input type="text" name="title" id="about_title" class="form-control"
-                                   value="{{ $about->title ?? '' }}">
-                            <span class="text-danger error-text title_error"></span>
-                        </div>
+                        <div class="row">
+                            {{-- Title --}}
+                            <div class="col-md-6 mb-3">
+                                <label for="about_title" class="form-label">Title</label>
+                                <input type="text" name="title" id="about_title" class="form-control"
+                                    value="{{ $about->title ?? '' }}">
+                                <span class="text-danger error-text title_error"></span>
+                            </div>
 
-                        {{-- Body --}}
-                        <div class="mb-3">
-                            <label for="body" class="form-label">About Body</label>
-                            <textarea id="body" name="body" class="form-control" rows="6">{!! $about->body ?? '' !!}</textarea>
-                            <span class="text-danger error-text body_error"></span>
-                        </div>
+                            {{-- Image --}}
+                            <div class="col-md-6 mb-3">
+                                <label for="about_image" class="form-label">Image</label>
+                                <input type="file" name="image" id="about_image" class="form-control" accept="image/*">
+                                <span class="text-danger error-text image_error"></span>
+                            </div>
 
-                        {{-- Image --}}
-                        <div class="mb-3">
-                            <label for="about_image" class="form-label">Image</label>
-                            <input type="file" name="image" id="about_image" class="form-control" accept="image/*">
-                            <span class="text-danger error-text image_error"></span>
-                        </div>
+                            {{-- Body --}}
+                            <div class="col-md-12 mb-3">
+                                <label for="body" class="form-label">About Body</label>
+                                <textarea id="body" name="body" class="form-control" rows="6">{!! $about->body ?? '' !!}</textarea>
+                                <span class="text-danger error-text body_error"></span>
+                            </div>
 
-                        {{-- Live Image Preview --}}
-                        <div class="mb-3">
-                            <label class="form-label d-block">Preview Image</label>
-                            <img id="about_image_preview"
-                                 src="{{ $about->image_url ?? 'https://via.placeholder.com/300x200?text=No+Image' }}"
-                                 alt="About Image Preview"
-                                 style="max-width:300px; height:auto; border:1px solid #ddd; padding:4px;">
-                        </div>
+                            {{-- Live Image Preview --}}
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label d-block">Preview Image</label>
+                                <img id="about_image_preview"
+                                    src="{{ $about->image_url ?? 'https://via.placeholder.com/300x200?text=No+Image' }}"
+                                    alt="About Image Preview"
+                                    style="max-width:300px; width: 100%; height:auto; border:1px solid #ddd; padding:4px;">
+                            </div>
 
-                        <button type="submit" id="aboutSaveBtn" class="btn btn-primary">Save</button>
+                            <div class="col-md-12">
+                                <button type="submit" id="aboutSaveBtn" class="btn btn-primary w-100">Save</button>
+                            </div>
+                            </div>
                     </form>
                 </div>
             </div>
         </div>
 
         {{-- Live Body Preview Card --}}
-        <div class="col-md-4 grid-margin stretch-card"> 
+        {{-- <div class="col-md-4 grid-margin stretch-card"> 
             <div class="card">
                 <div class="card-header">Live Preview</div>
                 <div class="card-body">
@@ -81,7 +76,7 @@
                     @endif
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
 </div>
 @endsection
