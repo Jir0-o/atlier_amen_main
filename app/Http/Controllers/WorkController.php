@@ -541,11 +541,55 @@ class WorkController extends Controller
 
     public function workShow(Work $work)
     {
-        $work->load(['category', 'gallery']); 
+        $work->load([
+            'category',
+            'gallery',
+            'variants.attributeValues.attribute'
+        ]);
+
+
+        $variants = $work->variants->map(function ($v) {
+            return [
+                'id' => $v->id,
+                'sku' => $v->sku,
+                'price' => $v->price,
+                'stock' => $v->stock,
+                'value_ids' => $v->attributeValues->pluck('id')->values()->all(),
+            ];
+        })->values();
+
+
+        $attributes = [];
+        foreach ($work->variants as $v) {
+            foreach ($v->attributeValues as $av) {
+                $attrId = $av->attribute_id;
+                if (!isset($attributes[$attrId])) {
+                    $attributes[$attrId] = [
+                        'id' => $attrId,
+                        'name' => $av->attribute->name,
+                        'values' => [],
+                    ];
+                }
+                $attributes[$attrId]['values'][$av->id] = [
+                    'id' => $av->id,
+                    'value' => $av->value,
+                    'slug' => $av->slug,
+                ];
+            }
+        }
+
+        $attributes = array_map(function ($a) {
+            $a['values'] = array_values($a['values']);
+            return $a;
+        }, $attributes);
+
+        $attributes = array_values($attributes);
 
         return view('frontend.art-info.art_info', [
-            'work'     => $work,
-            'category' => $work->category,
+            'work'        => $work,
+            'category'    => $work->category,
+            'variants'    => $variants,
+            'attributes'  => $attributes,
         ]);
     }
 }

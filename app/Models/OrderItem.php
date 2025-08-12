@@ -12,6 +12,8 @@ class OrderItem extends Model
         'work_id',
         'quantity',
         'unit_price',
+        'variant_text',
+        'work_variant_id',
         'line_total',
     ];
 

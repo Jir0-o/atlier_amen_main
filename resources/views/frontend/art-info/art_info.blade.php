@@ -137,7 +137,8 @@
                                 {!! $work->details ?: '<p>No details added.</p>' !!}
                             </div>
                             <br>
-                            <h4 class="playfair fw-bold mb-3">Price: $ {{ $work->price }}</h4>
+                            <h4 class="playfair fw-bold mb-3">Price: <strong id="variantPrice">—</strong></div></h4>
+                            <h4 class="playfair fw-bold mb-3">Stock: <strong id="variantStock">—</strong></div></h4>
 
                             {{-- Share --}}
                             <h4 class="text-decoration-underline playfair fw-bold mb-3 mt-4">Share:</h4>
@@ -174,9 +175,55 @@
                                             </button>
                                         </div>
                                     </div>
+                                    <div class="d-flex align-items-center gap-3 mb-3">
+                                    {{-- <div>Selected Price: <strong id="variantPrice">—</strong></div>
+                                    <div>Stock: <strong id="variantStock">—</strong></div> --}}
+                                </div>
+                                <input type="hidden" id="selectedVariantId" value="">
                                 </div>
                             </div><!-- /.row buttons -->
                         </div><!-- /.art-info -->
+                        <div class="modal fade" id="variantPickerModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Choose Options</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+
+                                <div class="row g-2">
+                                    @foreach($attributes as $attr)
+                                        <div class="col-12">
+                                            <label class="form-label">{{ $attr['name'] }}</label>
+                                            <select class="form-select js-attr-select-modal" data-attribute-id="{{ $attr['id'] }}">
+                                                <option value="">-- Select {{ $attr['name'] }} --</option>
+                                                @foreach($attr['values'] as $v)
+                                                    <option value="{{ $v['id'] }}">{{ $v['value'] }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="d-flex align-items-center gap-3 mt-3">
+                                    <div>Selected Price: <strong id="variantPriceModal">—</strong></div>
+                                    <div>Stock: <strong id="variantStockModal">—</strong></div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <label class="form-label">Quantity</label>
+                                    <input type="number" class="form-control" id="buyQtyModal" value="1" min="1" style="max-width:120px;">
+                                </div>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button class="btn btn-primary" id="variantConfirmBtn" disabled>Confirm</button>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
                     </div><!-- /.aos wrapper -->
                 </div><!-- /.col info -->
             </div><!-- /.row -->
@@ -189,133 +236,238 @@
 
 @push('scripts')
 <script>
-$(function() {
-    const isLoggedIn = @json(auth()->check());
-    // 1. Image preview switch
-    $('.indi-thumb-img').on('click', function() {
-        const fullSrc = $(this).data('full') || $(this).attr('src');
-        $('#indi-img-preview').attr('src', fullSrc);
-        $('.indi-img-gallery .active').removeClass('active');
-        $(this).parent().addClass('active');
+$(function () {
+  // ====== Data from server ======
+  var VARIANTS = @json($variants ?? []); 
+  var ATTRS    = @json($attributes ?? []); 
+  var WORK_ID  = {{ $work->id }};
+  var BASE_PRICE = {{ (float)($work->price ?? 0) }}; 
+
+  var ADD_TO_CART_URL = "{{ route('cart.add') }}";
+  var BUY_NOW_URL     = "{{ route('cart.buyNow') }}";
+
+  // ====== Helpers ======
+  function csrfHeader() { return { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }; }
+  function toastOk(msg){ if (window.Swal) Swal.fire({icon:'success',title:msg,timer:1200,showConfirmButton:false}); else alert(msg); }
+  function toastErr(msg){ if (window.Swal) Swal.fire({icon:'error',title:msg,timer:1500,showConfirmButton:false}); else alert(msg); }
+  function money(n){ n = parseFloat(n||0); if (isNaN(n)) n = 0; return n.toFixed(2); }
+
+  // Lowest variant price (if any)
+  function getMinVariantPrice(){
+    var min = Infinity;
+    (VARIANTS || []).forEach(function(v){
+      var p = parseFloat(v.price);
+      if (!isNaN(p) && p < min) min = p;
     });
+    return isFinite(min) ? min : null;
+  }
 
-    // 2. Copy URL to clipboard
-    $('.js-copy-link').on('click', function() {
-        const url = $(this).data('copy');
-        navigator.clipboard?.writeText(url)
-            .then(() => showCopiedToast('Link copied! Paste in Instagram.'))
-            .catch(() => prompt('Copy this link:', url));
-    });
-
-    function showCopiedToast(msg) {
-        if (window.Swal) {
-            Swal.fire({ icon:'success', title: msg, timer:1200, showConfirmButton:false });
-        } else {
-            alert(msg);
-        }
+  // Stock UI: only show number & note if 1..3 left; otherwise show "—"
+  function applyStockUI($el, stock){
+    $el.text('—').removeClass('text-danger');
+    $el.siblings('.low-note').remove();
+    if (stock != null && !isNaN(+stock) && +stock > 0 && +stock <= 3) {
+      $el.text(+stock).addClass('text-danger')
+        .after('<span class="low-note text-warning ms-2">(Only ' + (+stock) + ' left)</span>');
     }
+  }
 
-    function guestCartCount() {
-        const cart = JSON.parse(localStorage.getItem('guest_cart') || '{}');
-        return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  // Set main (page) UI
+  function setMainVariantUI(v){
+    if (!v) {
+      $('#selectedVariantId').val('');
+      var min = getMinVariantPrice();
+      $('#variantPrice').text(money(min != null ? min : BASE_PRICE));
+      applyStockUI($('#variantStock'), null);
+      return;
     }
+    $('#selectedVariantId').val(v.id);
+    $('#variantPrice').text(money(v.price));
+    applyStockUI($('#variantStock'), v.stock);
+  }
 
-    // 3. Update mini‑cart badge
-    function updateCartCount(count) {
-        $('#mini-cart-count').text(count);
+  // Seed initial UI with lowest price (or base)
+  setMainVariantUI(null);
+
+  // ====== Gallery small helpers ======
+  $('.indi-thumb-img').on('click', function(){
+    var fullSrc = $(this).data('full') || $(this).attr('src');
+    $('#indi-img-preview').attr('src', fullSrc);
+    $('.indi-img-gallery .active').removeClass('active');
+    $(this).parent().addClass('active');
+  });
+  $('.js-copy-link').on('click', function(){
+    var url = $(this).data('copy');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function(){ toastOk('Link copied!'); });
+    } else { prompt('Copy this link:', url); }
+  });
+
+  // ====== Variant selection (Modal) ======
+  var selectedValues = {};  // attribute_id => attribute_value_id
+  var pendingAction  = null; // "add" or "buy"
+
+  function variantFromSelected() {
+    if (!ATTRS || ATTRS.length === 0) return null;
+    for (var i = 0; i < ATTRS.length; i++) {
+      if (!selectedValues[ATTRS[i].id]) return null;
     }
+    // Build a set of chosen value ids (order-agnostic)
+    var chosenSet = {};
+    ATTRS.forEach(function(a){ chosenSet[ selectedValues[a.id] ] = true; });
 
-    if (!isLoggedIn) {
-        updateCartCount(guestCartCount());
+    for (var k = 0; k < VARIANTS.length; k++) {
+      var v = VARIANTS[k];
+      if (!v.value_ids || v.value_ids.length !== ATTRS.length) continue;
+      var ok = true;
+      for (var j = 0; j < v.value_ids.length; j++) {
+        if (!chosenSet[ parseInt(v.value_ids[j],10) ]) { ok = false; break; }
+      }
+      if (ok) return v;
     }
+    return null;
+  }
 
-    // 4. Save to localStorage for guest
-    function saveCartToLocal(workId, qty) {
-        const cart = JSON.parse(localStorage.getItem('guest_cart') || '{}');
-        cart[workId] = (cart[workId] || 0) + qty;
-        localStorage.setItem('guest_cart', JSON.stringify(cart));
+  function refreshModalSummary(){
+    var v = variantFromSelected();
+    if (!v) {
+      $('#variantPriceModal').text('—');
+      $('#variantStockModal').text('—');
+      $('#buyQtyModal').attr('max','');
+      $('#variantConfirmBtn').prop('disabled', true);
+      applyStockUI($('#variantStockModal'), null);
+    } else {
+      $('#variantPriceModal').text(money(v.price));
+      applyStockUI($('#variantStockModal'), v.stock);
+
+      // cap qty to available stock if provided
+      if (v.stock != null && !isNaN(+v.stock) && +v.stock > 0) {
+        $('#buyQtyModal').attr('max', +v.stock);
+      } else {
+        $('#buyQtyModal').attr('max', '');
+      }
+      // disable confirm if out of stock
+      $('#variantConfirmBtn').prop('disabled', (v.stock != null && +v.stock <= 0));
     }
+  }
 
-    // 5. Sync guest cart after login/register
-    function syncGuestCart() {
-        const cart = JSON.parse(localStorage.getItem('guest_cart') || '{}');
-        if (!Object.keys(cart).length) return;
+  function openVariantModal(action){
+    pendingAction = action;
+    selectedValues = {};                 
+    $('.js-attr-select-modal').val('');  
+    $('#buyQtyModal').val(1).attr('max','');
+    refreshModalSummary();
+    $('#variantPickerModal').modal('show');
+  }
 
-        $.ajax({
-            url: "{{ route('cart.sync') }}",
-            method: 'POST',
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: JSON.stringify({ items: cart })
-        }).always(() => {
-            localStorage.removeItem('guest_cart');
-        });
+  // keep qty within [1..max]
+  $('#buyQtyModal').on('input change', function(){
+    var max = parseInt($(this).attr('max') || '0', 10);
+    var val = parseInt($(this).val() || '1', 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (max > 0 && val > max) val = max;
+    $(this).val(val);
+  });
+
+  $(document).on('change', '.js-attr-select-modal', function(){
+    var attrId = parseInt($(this).data('attribute-id'), 10);
+    var valId  = $(this).val() ? parseInt($(this).val(), 10) : null;
+    if (valId) selectedValues[attrId] = valId; else delete selectedValues[attrId];
+    refreshModalSummary();
+  });
+
+  $('#variantConfirmBtn').on('click', function(){
+    var v = variantFromSelected();
+    if (!v) return;
+    setMainVariantUI(v);
+    var qty = parseInt($('#buyQtyModal').val() || '1', 10);
+    if (isNaN(qty) || qty < 1) qty = 1;
+    if (v.stock != null && !isNaN(+v.stock) && qty > +v.stock) qty = +v.stock;
+
+    $('#variantPickerModal').modal('hide');
+
+    if (pendingAction === 'add') doAddToCart(v.id, qty);
+    else doBuyNow(v.id, qty);
+  });
+
+  // ====== AJAX Actions ======
+  function doAddToCart(variantId, qty) {
+    var payload = { work_id: WORK_ID, qty: qty };
+    if (variantId) payload.variant_id = variantId;
+
+    var $btn = $('.btn-add-to-cart');
+    $btn.prop('disabled', true).text('Adding...');
+
+    $.ajax({
+      url: ADD_TO_CART_URL,
+      method: 'POST',
+      headers: csrfHeader(),
+      contentType: 'application/json',
+      data: JSON.stringify(payload)
+    })
+    .done(function(resp){
+      if (resp && resp.status === 'success') {
+        if (typeof resp.cart_count !== 'undefined') $('#mini-cart-count').text(resp.cart_count);
+        toastOk('Added to cart');
+      } else {
+        toastErr(resp && resp.message ? resp.message : 'Failed to add');
+      }
+    })
+    .fail(function(xhr){
+      var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to add';
+      toastErr(msg);
+    })
+    .always(function(){ $btn.prop('disabled', false).text('Add to Cart'); });
+  }
+
+  function doBuyNow(variantId, qty) {
+    var payload = { work_id: WORK_ID, qty: qty };
+    if (variantId) payload.variant_id = variantId;
+
+    var $btn = $('.btn-buy-now');
+    $btn.prop('disabled', true).text('Processing...');
+
+    $.ajax({
+      url: BUY_NOW_URL,
+      method: 'POST',
+      headers: csrfHeader(),
+      contentType: 'application/json',
+      data: JSON.stringify(payload)
+    })
+    .done(function(resp){
+      if (resp && resp.status === 'success' && resp.redirect) {
+        window.location.href = resp.redirect;
+      } else {
+        toastErr(resp && resp.message ? resp.message : 'Failed to start checkout');
+      }
+    })
+    .fail(function(xhr){
+      var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Purchase failed';
+      toastErr(msg);
+    })
+    .always(function(){ $btn.prop('disabled', false).text('Buy Now'); });
+  }
+
+  // ====== Buttons ======
+  $('.btn-add-to-cart').off('click').on('click', function(e){
+    e.preventDefault();
+    if (ATTRS && ATTRS.length > 0) {
+      openVariantModal('add'); // always re-open
+    } else {
+      doAddToCart(null, 1);
     }
+  });
 
-    // 6. Add to Cart
-    $('.btn-add-to-cart').on('click', function(e) {
-        e.preventDefault();
-        const $btn   = $(this);
-        const workId = $btn.data('work-id');
-        if (!workId) return;
-
-        // === For guests: only localStorage, no DB call ===
-        if (!isLoggedIn) {
-        saveCartToLocal(workId, 1);
-        updateCartCount(guestCartCount()); 
-        showCopiedToast('Added to cart');
-        return;
-        }
-
-        // === For logged‑in users: persist immediately to your DB ===
-        $btn.prop('disabled', true).text('Adding...');
-        $.ajax({
-        url: "{{ route('cart.add') }}",
-        method: 'POST',
-        contentType: 'application/json',
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-        data: JSON.stringify({ work_id: workId })
-        })
-        .done(resp => {
-        if (resp.status === 'success') {
-            updateCartCount(resp.cart_count);
-            showCopiedToast(resp.message); // e.g. “Added to cart”
-        } else {
-            throw new Error(resp.message);
-        }
-        })
-        .fail(xhr => {
-        showCopiedToast(xhr.responseJSON?.message || 'Failed to add');
-        })
-        .always(() => {
-        $btn.prop('disabled', false).text('Add to Cart');
-        });
-    });
-
-    // 7. Buy Now
-    $('.btn-buy-now').on('click', function(e) {
-        e.preventDefault();
-        const workId = $(this).data('work-id');
-        if (!workId) return;
-
-        $.ajax({
-            url: "{{ route('cart.add') }}",
-            method: 'POST',
-            contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: JSON.stringify({ work_id: workId })
-        })
-        .done(resp => {
-            if (resp.status === 'success') {
-            window.location.href = "{{ route('checkout.form') }}" + '?buy_now_id=' + workId;
-            } else {
-            throw new Error(resp.message);
-            }
-        })
-        .fail(xhr => {
-            showCopiedToast(xhr.responseJSON?.message || 'Purchase failed');
-        });
-    });
+  $('.btn-buy-now').off('click').on('click', function(e){
+    e.preventDefault();
+    if (ATTRS && ATTRS.length > 0) {
+      openVariantModal('buy'); 
+    } else {
+      doBuyNow(null, 1);
+    }
+  });
 });
 </script>
 @endpush
+
+

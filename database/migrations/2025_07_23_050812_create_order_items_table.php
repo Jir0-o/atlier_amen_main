@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('work_id')->constrained('works')->cascadeOnDelete();
 
             $table->integer('quantity');
+            $table->unsignedBigInteger('work_variant_id')->nullable()->after('work_id');
+            $table->string('variant_text')->nullable()->after('work_variant_id');
             $table->decimal('unit_price', 10, 2);
             $table->decimal('line_total', 10, 2);
             $table->timestamps();

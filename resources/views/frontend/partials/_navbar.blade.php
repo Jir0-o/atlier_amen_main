@@ -22,8 +22,11 @@
                             </span>
                         @endif
                     </a>
-                    <a href="#" class="fs-5 me-md-3">
+                    <a href="{{ route('wishlist') }}" class="fs-5 me-md-3">
                         <i class="ri-heart-2-line"></i>
+                    </a>
+                    <a href="{{ route('contact') }}" class="fs-5">
+                        <i class="ri-phone-line"></i>
                     </a>
                     @guest
                         <a href="{{ route('frontend.login') }}" class="fs-5">
@@ -31,20 +34,15 @@
                         </a>
                     @endguest
                     @auth
-                        <a href="#" class="fs-5 dropdown-toggle" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="ri-user-line"></i> <span class="fs-6">{{ Auth::user()->first_name ?? Auth::user()->name ?? 'Account' }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
-                            <li><a class="dropdown-item" href="{{ route('profile.show') }}">Profile</a></li>
-                            <li><a class="dropdown-item" href="{{ route('dashboard') }}">Dashboard</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); userMenuLogout();">Logout</a>
-                            </li>
-                        </ul>
-                        <form id="user-menu-logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">
-                            @csrf
-                        </form>
+                        @if(auth()->user()->role == 1)
+                            <a href="{{ route('dashboard') }}" class="fs-5 me-md-3">
+                                <i class="ri-user-line"></i>
+                            </a>
+                        @else
+                            <a href="{{ route('profile.show') }}" class="fs-5 me-md-3">
+                                <i class="ri-user-line"></i>
+                            </a>
+                        @endif
                     @endauth
                 </div>
                 <ul class="navbar-nav">

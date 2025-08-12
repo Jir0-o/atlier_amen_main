@@ -54,7 +54,8 @@
                     <div id="previewBackgroundWrapper" 
                         style="height: 300px; 
                                 background-image: linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)), 
-                                                url('{{ $contract->background_image ? asset($contract->background_image) : '/frontend-css/img/webimg/bg-contact.jpg' }}');
+                                    url('{{ optional($contract)->background_image ? asset($contract->background_image) : asset('/frontend-css/img/webimg/bg-contact.jpg') }}');
+
                                 background-size: cover; 
                                 background-position: center; 
                                 display: flex; 
@@ -64,7 +65,7 @@
                                 color: #fff;">
                         <div>
                             <img id="previewUser" class="contact-profile mb-3" 
-                                src="{{ $contract->user_image ? asset($contract->user_image) : '/frontend-css/img/webimg/img-cat-1.png' }}" 
+                                src="{{ optional($contract)->user_image ? asset($contract->user_image) : asset('/frontend-css/img/webimg/img-cat-1.png') }}"
                                 alt="Profile" 
                                 style="width:120px; border-radius:50%; border:2px solid #fff;">
 

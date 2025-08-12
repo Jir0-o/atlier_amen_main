@@ -18,12 +18,11 @@ class WorkVariant extends Model
         return $this->belongsToMany(AttributeValue::class, 'work_variant_attribute_value');
     }
 
-    public function combinationText()
+    public function combinationText(): string
     {
-        return $this->attributeValues
-            ->groupBy(fn($v) => $v->attribute->name)
-            ->map(fn($group, $attributeName) => $attributeName . ': ' . $group->pluck('value')->join(', '))
-            ->values()
-            ->join(' / ');
+        $g = $this->attributeValues->groupBy(fn($v) => $v->attribute->name);
+        return $g->map(fn($vals, $attr) => $attr.': '.$vals->pluck('value')->join(', '))
+                 ->values()
+                 ->join(' / ');
     }
 }

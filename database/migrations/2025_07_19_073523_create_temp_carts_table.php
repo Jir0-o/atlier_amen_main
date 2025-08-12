@@ -12,19 +12,23 @@ return new class extends Migration {
             $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('session_id', 100)->index();
             $table->unsignedBigInteger('work_id');
+            $table->unsignedBigInteger('work_variant_id')->nullable()->index();
+            $table->decimal('unit_price', 14, 2)->nullable();
             $table->unsignedInteger('quantity')->default(1);
-
-            // Optional snapshot fields (so if Work changes later we still have info)
+            $table->string('variant_text')->nullable();
             $table->string('work_name')->nullable();
             $table->string('work_image_low')->nullable();
-
-
             $table->timestamps();
 
+            // Foreign keys
             $table->foreign('work_id')->references('id')->on('works')->cascadeOnDelete();
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('work_variant_id', 'fk_work_variant_id')
+                  ->references('id')->on('work_variants')
+                  ->nullOnDelete();
 
-            $table->unique(['session_id', 'work_id']);
+            $table->unique(['session_id', 'work_id', 'work_variant_id'], 'uniq_session_work_variant');
+            $table->unique(['user_id', 'work_id', 'work_variant_id'], 'uniq_user_work_variant');
         });
     }
 
