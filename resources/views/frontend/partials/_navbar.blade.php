@@ -26,12 +26,12 @@
                         <i class="ri-heart-2-line"></i>
                     </a>
                     @guest
-                        <a href="{{ route('frontend.login') }}" class="fs-5">
+                        <a href="{{ route('frontend.login') }}" class="fs-5 me-md-3">
                             <i class="ri-user-line"></i>
                         </a>
                     @endguest
                     @auth
-                        <a href="#" class="fs-5 dropdown-toggle" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="fs-5 me-md-3 dropdown-toggle" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="ri-user-line"></i> <span class="fs-6">{{ Auth::user()->first_name ?? Auth::user()->name ?? 'Account' }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
@@ -46,6 +46,9 @@
                             @csrf
                         </form>
                     @endauth
+                    <a href="{{ route('contact') }}" class="fs-5">
+                        <i class="ri-phone-line"></i>
+                    </a>
                 </div>
                 <ul class="navbar-nav">
                     <li class="nav-item">

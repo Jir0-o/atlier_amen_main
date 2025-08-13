@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="content-wrapper">
-    <h3 class="font-weight-bold">Contract</h3>
+    <h3 class="font-weight-bold">Contact</h3>
     <div class="row">
         {{-- Form --}}
         <div class="col-md-8 grid-margin stretch-card">
@@ -18,7 +18,7 @@
                             <label class="form-label">Background Image</label>
                             <input type="file" name="background_image" id="background_image" class="form-control" accept="image/*">
                             @if(!empty($contract?->background_image))
-                                <img src="{{ asset($contract->background_image) }}" alt="Background" style="max-width: 100%; margin-top:10px;">
+                                <img src="{{ asset($contract?->background_image) }}" alt="Background" style="max-width: 100%; margin-top:10px;">
                             @endif
                             <span class="text-danger error-text background_image_error"></span>
                         </div>
@@ -54,7 +54,7 @@
                     <div id="previewBackgroundWrapper" 
                         style="height: 300px; 
                                 background-image: linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)), 
-                                                url('{{ $contract->background_image ? asset($contract->background_image) : '/frontend-css/img/webimg/bg-contact.jpg' }}');
+                                                url('{{ $contract?->background_image ? asset($contract->background_image) : '/frontend-css/img/webimg/bg-contact.jpg' }}');
                                 background-size: cover; 
                                 background-position: center; 
                                 display: flex; 
@@ -64,12 +64,12 @@
                                 color: #fff;">
                         <div>
                             <img id="previewUser" class="contact-profile mb-3" 
-                                src="{{ $contract->user_image ? asset($contract->user_image) : '/frontend-css/img/webimg/img-cat-1.png' }}" 
+                                src="{{ $contract?->user_image ? asset($contract->user_image) : '/frontend-css/img/webimg/img-cat-1.png' }}" 
                                 alt="Profile" 
                                 style="width:120px; border-radius:50%; border:2px solid #fff;">
 
                             <blockquote class="cormorant" style="font-size: 20px; line-height: 1.5; margin: 0;">
-                                {!! $contract->poem ?? 'This was a blockquote,<br>so the user should add a poem in there.' !!}
+                                {!! $contract?->poem ?? 'This was a blockquote,<br>so the user should add a poem in there.' !!}
                             </blockquote>
                         </div>
                     </div>

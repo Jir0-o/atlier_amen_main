@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        <center class="container">
+        {{-- <center class="container">
             <div class="section-title-icon d-none d-md-flex row align-items-center justify-content-center">
                 <div class="col-md-4">
                     <div class="d-flex justify-content-end">
@@ -39,7 +39,7 @@
                     </div>
                 </div>
             </div>
-        </center>
+        </center> --}}
     </section>
     <!-- about me end -->
 </div>
