@@ -27,6 +27,8 @@
   <form id="checkoutForm" action="{{ route('checkout.process') }}" method="POST">
     @csrf
     <input type="hidden" name="buy_now_id" value="{{ request('buy_now_id') }}">
+    <input type="hidden" name="cart_line_id" value="{{ request('cart_line_id') }}">
+    <input type="hidden" name="buy_qty" value="{{ request('buy_qty') }}">
     <section class="section-gap px-4">
       <div class="row">
         {{-- Shipping & Billing Form --}}
@@ -98,7 +100,7 @@
 
             <div id="billing_fields" @if(old('billing_form', true)) style="display:none;" @endif>
               <div class="row">
-                @foreach([
+                @foreach([ 
                   'bill_f_name'=>'First Name','bill_l_name'=>'Last Name',
                   'bill_address'=>'Street Address'
                 ] as $field=>$label)
@@ -140,72 +142,80 @@
             </div>
           </div>
         </div>
-
         {{-- Product Information --}}
         <div class="col-sm-6 col-md-5 col-xxl-4 cormorant">
-            <h4>Product Information</h4>
-            <div class="table-responsive">
-                <table class="w-100 align-middle">
-                    <tbody>
-                        @foreach($items as $item)
-                            @php
-                                $unitPrice = $item->work->price ?? 0;
-                                $lineTotal = $unitPrice * $item->quantity;
-                            @endphp
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img class="p-1"
-                                            width="65"
-                                            src="{{ asset($item->work->work_image_low) }}"
-                                            alt="{{ $item->work_name }}"
-                                            loading="lazy">
-                                        <h5 class="m-0">
-                                            {{ $item->work_name }} (x{{ $item->quantity }})
-                                        </h5>
-                                    </div>
-                                </td>
-                                <td>
-                                    <h5 class="text-end">
-                                        $ {{ number_format($lineTotal, 2) }}
-                                    </h5>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td><h5 class="m-0">Total</h5></td>
-                            <td>
-                                <h5 class="text-end">
-                                    $ {{ number_format($subtotal, 2) }}
-                                </h5>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><h5 class="m-0">Shipping charge</h5></td>
-                            <td>
-                                <h5 class="text-end">
-                                    $ {{ number_format($shippingCharge, 2) }}
-                                </h5>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><h5 class="m-0">Grand Total</h5></td>
-                            <td>
-                                <h5 class="text-end">
-                                    $ {{ number_format($grandTotal, 2) }}
-                                </h5>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            <hr>
-            <button type="submit" class="btn btn-dark w-100">
-                Process to pay
-            </button>
+          <h4>Product Information</h4>
+          <div class="table-responsive">
+            <table class="w-100 align-middle">
+              <tbody>
+                @foreach($items as $item)
+                  @php
+                    $unitPrice = $item->unit_price ?? ($item->work->price ?? 0);
+                    $lineTotal = $unitPrice * $item->quantity;
+
+                    // Build a variant label if no snapshot text exists
+                    $variantText = $item->variant_text ?? null;
+                    if (!$variantText && $item->workVariant) {
+                        $groups = [];
+                        foreach ($item->workVariant->attributeValues as $v) {
+                            $attr = optional($v->attribute)->name ?: 'Option';
+                            $groups[$attr][] = $v->value;
+                        }
+                        $parts = [];
+                        foreach ($groups as $attr => $vals) {
+                            $parts[] = $attr . ': ' . implode(', ', $vals);
+                        }
+                        $variantText = implode(' / ', $parts);
+                    }
+
+                    // Pick an image
+                    $imgSrc = $item->work_image_low
+                              ?: optional($item->work)->work_image_url
+                              ?: asset('frontend-css/img/webimg/port-3-gallery.jpg');
+                  @endphp
+
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <img class="p-1" width="65" src="{{ is_string($imgSrc) && Str::startsWith($imgSrc, ['http','/']) ? $imgSrc : asset($imgSrc) }}"
+                            alt="{{ $item->work_name }}" loading="lazy">
+                        <div>
+                          <h5 class="m-0">{{ $item->work_name }} (x{{ $item->quantity }})</h5>
+                          @if($variantText)
+                            <div class="small text-muted">{{ $variantText }}</div>
+                          @endif
+                          <div class="small text-muted">$ {{ number_format($unitPrice, 2) }} / unit</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <h5 class="text-end">$ {{ number_format($lineTotal, 2) }}</h5>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td><h5 class="m-0">Total</h5></td>
+                  <td><h5 class="text-end">$ {{ number_format($subtotal, 2) }}</h5></td>
+                </tr>
+                <tr>
+                  <td><h5 class="m-0">Shipping charge</h5></td>
+                  <td><h5 class="text-end">$ {{ number_format($shippingCharge, 2) }}</h5></td>
+                </tr>
+                <tr>
+                  <td><h5 class="m-0">Grand Total</h5></td>
+                  <td><h5 class="text-end">$ {{ number_format($grandTotal, 2) }}</h5></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <hr>
+          <button type="submit" class="btn btn-dark w-100">
+            Process to pay
+          </button>
         </div>
+
       </div>
     </section>
   </form>

@@ -13,12 +13,19 @@ class TempCart extends Model
         'quantity',
         'work_name',
         'work_image_low',
-        // 'unit_price',
+        'work_variant_id',
+        'variant_text',
+        'unit_price',
     ];
 
     public function work()
     {
         return $this->belongsTo(Work::class);
+    }
+
+    public function workVariant()
+    {
+        return $this->belongsTo(WorkVariant::class);
     }
 
     public function scopeForCurrent($query)

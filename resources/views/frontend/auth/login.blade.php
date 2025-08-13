@@ -65,80 +65,129 @@
 
 @push('scripts')
 <script>
-$(function() {
-    // Ensure CSRF token is available from <meta>
-    $.ajaxSetup({
-        headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}
-    });
+$(function () {
+  function getCsrfToken() {
+    // 1) Try <meta name="csrf-token">
+    var t = $('meta[name="csrf-token"]').attr('content');
+    if (t && t.length) return t;
 
-    $('#loginForm').on('submit', function(e) {
-        e.preventDefault();
-
-        const $form = $(this);
-        const $btn  = $('#loginSubmitBtn');
-        const redirectUrl = `{{ route("index") }}`;
-
-        clearFieldErrors($form);
-        $btn.prop('disabled', true).text('Please wait...');
-
-        $.ajax({
-            url: $form.attr('action'),
-            method: 'POST',
-            data: $form.serialize(),
-            dataType: 'json'
-        })
-        .done(function(resp) {
-            if (resp.status === 'success') {
-            Swal.fire({
-                icon: 'success',
-                title: 'Logged In!',
-                text: resp.message,
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                window.location.href = resp.redirect || redirectUrl;
-            });
-            } else {
-                Swal.fire({icon: 'warning', title: 'Hmm...', text: 'Unexpected response from server.'});
-            }
-        })
-        .fail(function(xhr) {
-            if (xhr.status === 422) {
-                const json = xhr.responseJSON || {};
-                const errors = json.errors || {};
-                showFieldErrors($form, errors);
-
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Login Failed',
-                    text: json.message || 'Please check your credentials and try again.'
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Server Error',
-                    text: 'Something went wrong. Please try again later.'
-                });
-            }
-        })
-        .always(function() {
-            $btn.prop('disabled', false).text('Login');
-        });
-    });
-
-    function clearFieldErrors($form) {
-        $form.find('.is-invalid').removeClass('is-invalid');
-        $form.find('.invalid-feedback[data-field]').text('');
+    // 2) Fallback to cookie "XSRF-TOKEN" (Laravel sets this)
+    var m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+    if (m && m[1]) {
+      try { return decodeURIComponent(m[1]); } catch(e) { return m[1]; }
     }
+    return null;
+  }
 
-    function showFieldErrors($form, errors) {
-        $.each(errors, function(field, messages) {
-            const $input = $form.find('[name="' + field + '"]');
-            const $feedback = $form.find('.invalid-feedback[data-field="' + field + '"]');
-            if ($input.length) { $input.addClass('is-invalid'); }
-            if ($feedback.length) { $feedback.text(messages.join(' ')); }
-        });
+  function ensureAjaxCsrf() {
+    var token = getCsrfToken();
+    if (token) {
+      $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': token }});
     }
+    return token;
+  }
+
+  // Set a default header at page load
+  ensureAjaxCsrf();
+
+  $('#loginForm').on('submit', function (e) {
+    e.preventDefault();
+
+    var $form = $(this);
+    var $btn  = $('#loginSubmitBtn');
+    var redirectUrl = `{{ route('index') }}`;
+
+    clearFieldErrors($form);
+    $btn.prop('disabled', true).text('Please wait...');
+
+    // Always fetch a fresh token and include it in BOTH header and body
+    var token = ensureAjaxCsrf();
+
+    // Build form data and make sure _token is present
+    var dataArr = $form.serializeArray();
+    var hasToken = dataArr.some(function (p) { return p.name === '_token'; });
+    if (!hasToken) dataArr.push({ name: '_token', value: token || '' });
+
+    $.ajax({
+      url: $form.attr('action'),
+      method: 'POST',
+      data: $.param(dataArr),
+      dataType: 'json',
+      // Double-safety: set header explicitly for this request too
+      beforeSend: function (xhr) {
+        if (token) xhr.setRequestHeader('X-CSRF-TOKEN', token);
+      }
+    })
+    .done(function (resp) {
+      if (resp && resp.status === 'success') {
+        // If backend returns a fresh token, update it before any other AJAX
+        if (resp.csrf) {
+          $('meta[name="csrf-token"]').attr('content', resp.csrf);
+          $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': resp.csrf }});
+        }
+        Swal.fire({
+          icon: 'success',
+          title: 'Logged In!',
+          text: resp.message || 'Login successful',
+          timer: 1200,
+          showConfirmButton: false
+        }).then(function () {
+          // Always do a full reload/navigation so the new CSRF cookie/meta are in sync
+          window.location.href = (resp.redirect || redirectUrl);
+        });
+      } else {
+        Swal.fire({ icon: 'warning', title: 'Hmm...', text: 'Unexpected response from server.' });
+      }
+    })
+    .fail(function (xhr) {
+      // Laravel often returns 419 for CSRF mismatch
+      if (xhr.status === 419) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Session Updated',
+          text: 'Security token expired or changed. Please reload and try again.'
+        }).then(function () {
+          window.location.reload();
+        });
+        return;
+      }
+
+      if (xhr.status === 422) {
+        var json = xhr.responseJSON || {};
+        var errors = json.errors || {};
+        showFieldErrors($form, errors);
+        Swal.fire({
+          icon: 'error',
+          title: 'Login Failed',
+          text: json.message || 'Please check your credentials and try again.'
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Server Error',
+          text: 'Something went wrong. Please try again later.'
+        });
+      }
+    })
+    .always(function () {
+      $btn.prop('disabled', false).text('Login');
+    });
+  });
+
+  function clearFieldErrors($form) {
+    $form.find('.is-invalid').removeClass('is-invalid');
+    $form.find('.invalid-feedback[data-field]').text('');
+  }
+
+  function showFieldErrors($form, errors) {
+    $.each(errors, function (field, messages) {
+      var $input = $form.find('[name="' + field + '"]');
+      var $feedback = $form.find('.invalid-feedback[data-field="' + field + '"]');
+      if ($input.length) { $input.addClass('is-invalid'); }
+      if ($feedback.length) { $feedback.text(messages.join(' ')); }
+    });
+  }
 });
 </script>
+
 @endpush

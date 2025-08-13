@@ -26,6 +26,7 @@
                         <th>Art Info</th>
                         <th>QTY</th>
                         <th>Price</th>
+                        <th>Variant</th>
                         <th>Action</th>
                     </tr>
                     </thead>
@@ -112,215 +113,138 @@
 @push('scripts')
 <script>
 $(function(){
-  const shippingCost = 10.00;
-  const isLoggedIn  = @json(auth()->check());
-  // since you’re storing uploads directly in public/, assetBase should point to your public root
-  const assetBase   = "{{ asset('') }}";  
+  var shippingCost = 10.00;
+  var assetBase    = "{{ asset('') }}";
 
-  function formatPrice(n){ return n.toFixed(2); }
-  function updateSummary(totalQty, subtotal){
+  function formatPrice(n){ return Number(n || 0).toFixed(2); }
+  function safeImg(src){
+    if (!src) return "{{ asset('frontend-css/img/webimg/port-1-gallery.jpg') }}";
+    // If it's already an absolute URL (starts with http or /storage/...), return as-is
+    return /^https?:\/\//.test(src) || src.startsWith('/') ? src : (assetBase + src);
+  }
+
+  function variantLabel(item){
+    if (item.variant_text) return item.variant_text;              // snapshot from DB
+    if (item.work_variant && item.work_variant.attribute_values) { // <- updated
+      var groups = {};
+      item.work_variant.attribute_values.forEach(function(v){
+        var attr = v.attribute ? v.attribute.name : 'Option';
+        (groups[attr] = groups[attr] || []).push(v.value);
+      });
+      var parts = [];
+      Object.keys(groups).forEach(function(attr){
+        parts.push(attr + ': ' + groups[attr].join(', '));
+      });
+      return parts.join(' / ');
+    }
+    return '—';
+  }
+
+
+  function updateSummary(items){
+    var totalQty = 0, subtotal = 0;
+    items.forEach(function(it){
+      totalQty += Number(it.quantity || 0);
+      subtotal += Number(it.unit_price || 0) * Number(it.quantity || 0);
+    });
     $('.total_qty').text(totalQty);
     $('.subtotal').text(formatPrice(subtotal));
     $('.grand_total').text(formatPrice(subtotal + shippingCost));
     $('#mini-cart-count').text(totalQty);
   }
 
-  // ── GUEST CART ─────────────────
-  function loadGuestCart(){
-    const cart = JSON.parse(localStorage.getItem('guest_cart')||'{}');
-    const ids  = Object.keys(cart);
-    if (!ids.length) {
-      $('#cart-items-body').html('<tr><td colspan="5">Your cart is empty</td></tr>');
-      return updateSummary(0,0);
+  function renderRows(items){
+    if (!items.length) {
+      $('#cart-items-body').html('<tr><td colspan="6">Your cart is empty</td></tr>');
+      updateSummary([]);
+      return;
     }
-    let rows='', totalQty=0, subtotal=0, pending=ids.length;
-    ids.forEach((id,i) => {
-      const qty = cart[id];
-      totalQty += qty;
-      $.getJSON("/works/json/" + id, function(work) {
-        const price     = parseFloat(work.price||0);
-        const lineTotal = price*qty;
-        subtotal += lineTotal;
-        rows += `
-          <tr data-id="${id}">
-            <td>${i+1}.</td>
-            <td>
-              <div class="d-flex align-items-center gap-2">
-                <img src="${assetBase}${work.work_image_low}" width="60" class="art-thumb">
-                <div><h6>${work.name}</h6><p>$${formatPrice(price)}/unit</p></div>
+
+    var rows = '';
+    items.forEach(function(item, i){
+      var price     = Number(item.unit_price || 0);
+      var lineTotal = price * Number(item.quantity || 0);
+      var title     = item.work_name || (item.work ? item.work.name : 'Artwork');
+      var imgSrc    = item.work_image || (item.work ? item.work.work_image : null);
+      var variant   = variantLabel(item);
+
+      rows += `
+        <tr data-id="${item.id}">
+          <td>${i+1}.</td>
+          <td>
+            <div class="d-flex align-items-center gap-2 text-start">
+              <img src="${safeImg(imgSrc)}" width="60" class="art-thumb" alt="${title}">
+              <div>
+                <h6 class="m-0">${title}</h6>
+                <small class="text-muted">$ ${formatPrice(price)}/unit</small>
               </div>
-            </td>
-            <td>
-              <input type="number"
-                    class="form-control qty-number-field"
-                    value="${qty}"
-                    min="1" max="999">
-            </td>
-            <td class="text-end">$${formatPrice(lineTotal)}</td>
-            <td>
-              <button class="btn btn-outline-warning btn-guest-delete" data-id="${id}">
-                <i class="ri-delete-bin-line"></i>
-              </button>
-            </td>
-          </tr>`;
+            </div>
+          </td>
+          <td style="max-width:110px;">
+            <input type="number" class="form-control qty-number-field" value="${item.quantity}" min="1" max="999">
+          </td>
+          <td class="text-end">$ ${formatPrice(lineTotal)}</td>
+          <td class="text-start">${variant}</td>
+          <td>
+            <button class="btn btn-outline-warning btn-delete" title="Remove">
+              <i class="ri-delete-bin-line"></i>
+            </button>
+          </td>
+        </tr>`;
+    });
+
+    $('#cart-items-body').html(rows);
+    updateSummary(items);
+  }
+
+  function loadCart(){
+    $.getJSON("{{ route('cart.index') }}")
+      .done(function(resp){
+        renderRows(resp.items || []);
       })
-      .always(()=> {
-        if (!--pending) {
-          $('#cart-items-body').html(rows);
-          updateSummary(totalQty, subtotal);
-        }
+      .fail(function(){
+        $('#cart-items-body').html('<tr><td colspan="6">Failed to load cart.</td></tr>');
       });
-    });
   }
 
-  // ── GUEST QTY CHANGE ───────────────────
+  // Quantity change (server for everyone)
   $('#cart-items-body').on('change', '.qty-number-field', function(){
-    if (!isLoggedIn) {
-      const $tr     = $(this).closest('tr');
-      const id      = $tr.data('id');
-      let   newQty  = parseInt($(this).val(), 10) || 1;
-      if (newQty < 1) newQty = 1;
+    var $row = $(this).closest('tr');
+    var id   = $row.data('id');
+    var qty  = parseInt($(this).val(), 10);
+    if (!qty || qty < 1) { qty = 1; $(this).val(qty); }
 
-      // update localStorage
-      const cart = JSON.parse(localStorage.getItem('guest_cart')||'{}');
-      cart[id] = newQty;
-      localStorage.setItem('guest_cart', JSON.stringify(cart));
-
-      // re-render
-      loadGuestCart();
-    }
-  });
-
-
-  // ── USER CART ───────────────────────────────────────────
-  function loadUserCart(){
-    $.getJSON("{{ route('cart.index') }}", resp => {
-      let rows= '', totalQty=0, subtotal=0;
-      if (!resp.items.length) {
-        $('#cart-items-body').html('<tr><td colspan="5">Your cart is empty</td></tr>');
-        return updateSummary(0,0);
-      }
-      resp.items.forEach((item,i) => {
-        const price     = parseFloat(item.work.price || 0);
-        const lineTotal = price * item.quantity;
-        totalQty += item.quantity;
-        subtotal += lineTotal;
-        const imgUrl = assetBase + item.work.work_image;
-        rows += `
-          <tr data-id="${item.id}">
-            <td>${i+1}.</td>
-            <td>
-              <div class="d-flex align-items-center gap-2">
-                <img src="${imgUrl}" width="60" class="art-thumb" alt="${item.work_name}">
-                <div>
-                  <h6>${item.work_name}</h6>
-                  <p class="m-0">$ ${formatPrice(price)}/unit</p>
-                </div>
-              </div>
-            </td>
-            <td>
-              <input type="number" class="form-control qty-number-field" value="${item.quantity}" min="1" max="999">
-            </td>
-            <td class="text-end">$ ${formatPrice(lineTotal)}</td>
-            <td>
-              <button class="btn btn-outline-warning btn-delete"><i class="ri-delete-bin-line"></i></button>
-            </td>
-          </tr>`;
-      });
-      $('#cart-items-body').html(rows);
-      updateSummary(resp.cart_count, subtotal);
-    });
-  }
-
-    // ── BRANCH ─────────────────────
-  function loadCart(){
-    return isLoggedIn ? loadUserCart() : loadGuestCart();
-  }
-
-  // ── ENTRY POINT ─────────────────────────────────────────
-  function loadCart(){
-    if (!isLoggedIn) {
-      loadGuestCart();
-    } else {
-      loadUserCart();
-    }
-  }
-
-  // ── GUEST DELETE ───────────────────────────────────────
-  $('#cart-items-body').on('click', '.btn-guest-delete', function(){
-    const id = $(this).data('id');
-    const cart = JSON.parse(localStorage.getItem('guest_cart')||'{}');
-    delete cart[id];
-    localStorage.setItem('guest_cart', JSON.stringify(cart));
-    loadGuestCart();
-  });
-
-  // ── USER UPDATE & DELETE ───────────────────────────────
-  $('#cart-items-body').on('change', '.qty-number-field', function(){
-    if (!isLoggedIn) return;
-    const $row = $(this).closest('tr'),
-          id   = $row.data('id'),
-          qty  = +$(this).val();
     $.ajax({
       url: `{{ url('cart') }}/${id}/quantity`,
       method: 'PATCH',
+      dataType: 'json',
       data: { quantity: qty },
       headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
-    }).always(loadUserCart);
+    })
+    .always(loadCart);
   });
+
+  // Delete line
   $('#cart-items-body').on('click', '.btn-delete', function(){
-    if (!isLoggedIn) return;
-    const id = $(this).closest('tr').data('id');
+    var id = $(this).closest('tr').data('id');
     $.ajax({
       url: `{{ url('cart') }}/${id}`,
       method: 'DELETE',
       headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
-    }).always(loadUserCart);
+    }).always(loadCart);
   });
 
-  // ── ADD TO CART ────────────────────────────────────────
-  $('.btn-add-to-cart').on('click', function(e){
-    e.preventDefault();
-    const workId = $(this).data('work-id');
-    if (!workId) return;
-    if (!isLoggedIn) {
-      const cart = JSON.parse(localStorage.getItem('guest_cart')||'{}');
-      cart[workId] = (cart[workId]||0) + 1;
-      localStorage.setItem('guest_cart', JSON.stringify(cart));
-      $('#mini-cart-count').text(Object.values(cart).reduce((a,b)=>a+b,0));
-      return;
-    }
-    $.post("{{ route('cart.add') }}",
-      { work_id: workId },
-      data => { $('#mini-cart-count').text(data.cart_count); },
-      'json'
-    );
-  });
-
-  // ── PROCEED TO CHECKOUT ─────────────────────────────────
+  // Proceed to checkout — no client sync needed; server has guest cart via session
   $('#btn-proceed-checkout').on('click', function(e){
     e.preventDefault();
-    const target = "{{ route('checkout.form') }}";
-    if (!isLoggedIn) {
-      $.ajax({
-        url: "{{ route('cart.sync') }}",
-        method: 'POST',
-        contentType: 'application/json',
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-        data: JSON.stringify({ items: JSON.parse(localStorage.getItem('guest_cart')||'{}') })
-      }).always(() => {
-        window.location.href = target;
-      });
-    } else {
-      window.location.href = target;
-    }
+    window.location.href = "{{ route('checkout.form') }}";
   });
 
-  // Initial load
+  // First load
   loadCart();
 });
 </script>
-
 @endpush
+
 
 @endsection

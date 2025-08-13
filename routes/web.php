@@ -26,6 +26,7 @@ Route::post('/logout', function () {
 //frontend group
 Route::prefix('cart')->group(function () {
     Route::get('/', [TempCartController::class, 'index'])->name('cart.index'); 
+    Route::post('/buy-now', [TempCartController::class, 'buyNow'])->name('cart.buyNow');
     Route::post('/add', [TempCartController::class, 'add'])->name('cart.add');
     Route::patch('/{tempCart}/quantity', [TempCartController::class, 'updateQuantity'])->name('cart.update');
     Route::delete('/{tempCart}', [TempCartController::class, 'destroy'])->name('cart.destroy');
@@ -58,8 +59,9 @@ Route::prefix('frontend')->group(function () {
     Route::get('/password/reset', [FrontendController::class, 'resetPassword'])->middleware('guest')->name('frontend.password.request');
     Route::get('/about', [FrontendController::class, 'about'])->name('about');
     Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
+    Route::get('/wishlist', [FrontendController::class, 'wishlist'])->name('wishlist');
     Route::get('/workShow/{work}', [WorkController::class, 'workShow'])->name('frontend.works.show');
-    
+
 
 
     Route::post('/register/store', [UserController::class, 'store'])
@@ -85,7 +87,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-
+    
     //resource routes
     Route::resource('categories', CategoryController::class);
     Route::resource('adminAbout', AboutController::class);
@@ -109,7 +111,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/contact-messages/{id}', [ContractController::class, 'Adminshow'])->name('contact-messages.show');
     Route::delete('/admin/contact-messages/{id}', [ContractController::class, 'Admindestroy'])->name('contact-messages.destroy');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 

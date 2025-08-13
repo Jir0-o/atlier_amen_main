@@ -11,7 +11,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 🔐 Create Super Admin
         User::updateOrCreate(
             ['email' => 'superadmin@example.com'],
             [
@@ -19,12 +18,11 @@ class DatabaseSeeder extends Seeder
                 'last_name' => 'Admin',
                 'name' => 'Super Admin',
                 'country' => 'Bangladesh',
+                'role' => 1,
                 'password' => Hash::make('password123'),
                 'remember_token' => Str::random(10),
             ]
         );
-
-        // 👥 Create 10 dummy users
         for ($i = 1; $i <= 10; $i++) {
             User::create([
                 'first_name' => 'UserFirst' . $i,
@@ -32,6 +30,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'User ' . $i,
                 'email' => 'user' . $i . '@example.com',
                 'country' => 'Bangladesh',
+                'role' => 0,
                 'password' => Hash::make('password123'),
                 'remember_token' => Str::random(10),
             ]);

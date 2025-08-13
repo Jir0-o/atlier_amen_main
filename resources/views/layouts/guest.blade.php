@@ -53,5 +53,15 @@
     <script src="{{ asset('frontend-css/js/bootstrap.bundle.min.js') }}"></script>
     <!-- bootstrap js end -->
 @stack('scripts')
+    <script>
+      @if(session('success'))
+        Swal.fire({
+          icon: 'success',
+          title: 'Thank you!',
+          text: "{{ session('success') }}",
+          confirmButtonText: 'Close'
+        });
+      @endif
+    </script>
 </body>
 </html>
