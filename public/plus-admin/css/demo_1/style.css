@@ -22398,3 +22398,7 @@ body {
 .dataTable :where(th, td) {
   color: #fff;
 }
+
+.ck-editor__main > * {
+  color: #363636;
+}
