@@ -26,4 +26,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Work::class);
     }
+
+    public function workVariant(): BelongsTo
+    {
+        return $this->belongsTo(WorkVariant::class);
+    }
 }

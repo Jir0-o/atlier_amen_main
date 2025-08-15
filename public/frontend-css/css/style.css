@@ -427,15 +427,49 @@ main {
     aspect-ratio: var(--ratio-vertical);
 }
 
+.indi-img-gallery video {
+    width: 100%;
+    object-fit: cover;
+    border-radius: var(--curve-sm);
+    aspect-ratio: var(--ratio-square);
+}
+
 .indi-img-gallery img {
     width: 100%;
     object-fit: cover;
+    border-radius: var(--curve-sm);
     aspect-ratio: var(--ratio-square);
 }
 
 .indi-img-gallery .active img {
     filter: grayscale(1);
 }
+
+.indi-img-gallery .active video {
+    filter: grayscale(1);
+}
+
+/* .thumb.active {
+    border: 3px solid #007bff;
+    border-radius: 8px;
+    transition: 0.3s ease;
+}
+.thumb video, .thumb img {
+    width: 100%;
+    cursor: pointer;
+    border-radius: 6px;
+}
+.indi-img-preview {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+iframe#youtube_previewer {
+    width: 100%;
+    height: 360px;
+} */
 
 .art-info table {
     width: 100%;
@@ -525,6 +559,30 @@ main {
     background-color: #3b082b;
 }
 /* checkout page design end */
+
+/* profile page css start */
+.bg-portrait-profile {
+    background-image: linear-gradient(rgb(0 0 0 / 50%), rgb(0 0 0 / 50%)), url("./../img/webimg/bg-contact.jpg");
+    background-size: cover;
+}
+
+.profile-box {
+    backdrop-filter: blur(8px);
+    border: 1px solid #bbb;
+    border-radius: var(--curve-sm);
+}
+
+.profile-img img {
+    width: 150px; 
+    object-fit: cover;
+    aspect-ratio: var(--ratio-square);
+    border-radius: var(--curve-circle);
+}
+
+.border-start {
+    border-inline-start: 1px solid #bbb;
+}
+/* profile page css end */
 
 /* -------------------------
     Auth css section start

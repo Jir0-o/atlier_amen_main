@@ -4,26 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class TempCart extends Model
+class Wishlist extends Model
 {
-    protected $table = 'temp_carts'; 
-    protected $fillable = [
-        'user_id','session_id','work_id','quantity','work_name','work_image_low',
-        'work_variant_id','variant_text','unit_price',
-    ];
+    protected $table = 'wishlists'; 
+    protected $fillable = ['user_id', 'session_id', 'work_id'];
 
     public function work()
     {
         return $this->belongsTo(Work::class, 'work_id');
     }
 
-    public function workVariant()
-    {
-        return $this->belongsTo(WorkVariant::class, 'work_variant_id');
-    }
-
     /**
-     * Merge cart rows for user OR session (guest).
+     * Merge items for the logged-in user OR the current guest session.
      */
     public function scopeForCurrent($q, ?int $userId = null, ?string $sid = null)
     {
@@ -40,10 +32,17 @@ class TempCart extends Model
         });
     }
 
-    public function incrementQuantity(int $by = 1): void
+    public static function countForCurrent(): int
     {
-        $this->quantity += $by;
-        $this->save();
+        $userId = auth()->id();
+        $sid    = session()->getId();
+
+        return static::where(function ($q) use ($userId, $sid) {
+            if ($userId) $q->where('user_id', $userId);
+            $q->orWhere(function ($qq) use ($sid) {
+                $qq->whereNull('user_id')->where('session_id', $sid);
+            });
+        })->count();
     }
 }
 

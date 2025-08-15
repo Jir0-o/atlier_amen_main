@@ -54,7 +54,10 @@ class UserController extends Controller
 
         $request->session()->regenerate();
 
+        WishlistController::mergeGuestToUser($oldSid, Auth::id());
+
         $cartMerge->merge($oldSid, Auth::id(), $request->session()->getId());
+
 
         $cartCount = (int) TempCart::where('user_id', Auth::id())->sum('quantity');
         session(['cart_count' => $cartCount]);
@@ -123,6 +126,8 @@ class UserController extends Controller
         $request->session()->regenerate();
 
         $cartMerge->merge($oldSid, Auth::id(), $request->session()->getId());
+
+        WishlistController::mergeGuestToUser($oldSid, Auth::id());
 
         // update mini-cart count (optional)
         $cartCount = (int) TempCart::where('user_id', Auth::id())->sum('quantity');

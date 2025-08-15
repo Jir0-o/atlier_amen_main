@@ -182,9 +182,9 @@
                         <div>
                           <h5 class="m-0">{{ $item->work_name }} (x{{ $item->quantity }})</h5>
                           @if($variantText)
-                            <div class="small text-muted">{{ $variantText }}</div>
+                            <div class="text-end">{{ $variantText }}</div>
                           @endif
-                          <div class="small text-muted">$ {{ number_format($unitPrice, 2) }} / unit</div>
+                          <div class="text-start">$ {{ number_format($unitPrice, 2) }} / unit</div>
                         </div>
                       </div>
                     </td>

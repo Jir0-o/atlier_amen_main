@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use App\Models\TempCart;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,5 +37,7 @@ class AppServiceProvider extends ServiceProvider
                 ->whereNull('user_id')
                 ->update(['user_id' => $event->user->id]);
         });
+    
+        Paginator::useBootstrapFive();
     }
 }

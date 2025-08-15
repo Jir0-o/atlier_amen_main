@@ -11,7 +11,7 @@
         <section class="contact-form">
             <div class="row p-0 m-0">
                 <div class="col-sm-6 col-md-5 p-0 bg-l" 
-                    style="background-image: linear-gradient(rgb(0 0 0 / 50%), rgb(0 0 0 / 50%)), url('{{ $contact->background_image ?? asset('/frontend-css/img/webimg/bg-contact.jpg') }}');">
+                    style="background-image: linear-gradient(rgb(0 0 0 / 50%), rgb(0 0 0 / 50%)), url('{{ asset($contact->background_image ?? 'frontend-css/img/webimg/bg-contact.jpg') }}');">
                     <div class="d-flex justify-content-center align-items-center flex-column h-100">
                         <center data-aos="zoom-out" data-aos-duration="2000">
                             <img class="contact-profile mb-3" 

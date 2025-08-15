@@ -62,7 +62,7 @@
                 {{-- Portrait Grid --}}
                 <div class="all-portrait pt-4 pt-md-5">
                     @if ($items->isEmpty())
-                        <p class="text-muted text-center">No works in this category yet.</p>
+                        <p class="text-center">No works in this category yet.</p>
                     @else
                         <div class="row">
                             @foreach ($items as $index => $work)

@@ -25,9 +25,6 @@
                     <a href="{{ route('wishlist') }}" class="fs-5 me-md-3">
                         <i class="ri-heart-2-line"></i>
                     </a>
-                    <a href="{{ route('contact') }}" class="fs-5">
-                        <i class="ri-phone-line"></i>
-                    </a>
                     @guest
                         <a href="{{ route('frontend.login') }}" class="fs-5 me-md-3">
                             <i class="ri-user-line"></i>

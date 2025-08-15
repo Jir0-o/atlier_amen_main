@@ -176,7 +176,7 @@ $(function(){
               <img src="${safeImg(imgSrc)}" width="60" class="art-thumb" alt="${title}">
               <div>
                 <h6 class="m-0">${title}</h6>
-                <small class="text-muted">$ ${formatPrice(price)}/unit</small>
+                <small class="text-end">$ ${formatPrice(price)}/unit</small>
               </div>
             </div>
           </td>

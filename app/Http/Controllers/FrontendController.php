@@ -76,10 +76,10 @@ class FrontendController extends Controller
         return view('frontend.about-contract.contact', compact('contact'));
     }
 
-    public function wishlist()
-    {
-        return view('frontend.wishlist.wishlist');
-    }
+    // public function wishlist()
+    // {
+    //     return view('frontend.wishlist.wishlist');
+    // }
 
     /**
      * Show the form for creating a new resource.

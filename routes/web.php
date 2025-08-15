@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AttributeValueController;
 use App\Http\Controllers\CategoryController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TempCartController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WorkController;
 use App\Models\Category;
 use App\Models\Work;
@@ -52,6 +54,7 @@ Route::prefix('frontend')->group(function () {
 
     Route::get('/index', [FrontendController::class, 'index'])->name('index');
     Route::get('/shop', [FrontendController::class, 'shop'])->name('shop');
+    Route::get('/shop/data', [FrontendController::class, 'shopData'])->name('frontend.shop.data');
     Route::get('/exhibition', [FrontendController::class, 'exhibition'])->name('exhibition');
     Route::get('/cart', [FrontendController::class, 'cart'])->name('cart');
     Route::get('/login', [FrontendController::class, 'login'])->middleware('guest')->name('frontend.login');
@@ -59,7 +62,12 @@ Route::prefix('frontend')->group(function () {
     Route::get('/password/reset', [FrontendController::class, 'resetPassword'])->middleware('guest')->name('frontend.password.request');
     Route::get('/about', [FrontendController::class, 'about'])->name('about');
     Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
-    Route::get('/wishlist', [FrontendController::class, 'wishlist'])->name('wishlist');
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist');
+    Route::post('/wishlist/add', [WishlistController::class, 'add'])->name('wishlist.add'); 
+    Route::delete('/wishlist/{wishlist}', [WishlistController::class, 'remove'])
+        ->name('wishlist.remove');
+    Route::delete('/wishlist/work/{work}', [WishlistController::class, 'removePage'])
+        ->name('wishlist.remove.work');
     Route::get('/workShow/{work}', [WorkController::class, 'workShow'])->name('frontend.works.show');
 
 
@@ -93,6 +101,23 @@ Route::middleware('auth')->group(function () {
     Route::resource('adminAbout', AboutController::class);
     Route::resource('adminContract', ContractController::class);
     Route::resource('works', WorkController::class);
+
+    //account settings update routes
+    Route::post('/profile/settings/profile',  [ProfileController::class, 'updateProfile'])->name('account.settings.profile');
+    Route::post('/profile/settings/password', [ProfileController::class, 'changePassword'])->name('account.settings.password');
+    Route::post('/profile/settings/email',    [ProfileController::class, 'changeEmail'])->name('account.settings.email');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/account/orders/{order}', [ProfileController::class, 'showOrder'])->name('account.orders.show');
+
+    //account address routes
+    Route::post('/account/address/shipping', [AddressController::class, 'upsertShipping'])
+        ->name('account.address.shipping.upsert');
+    Route::post('/account/address/billing', [AddressController::class, 'upsertBilling'])
+        ->name('account.address.billing.upsert');
  
     // gallery delete
     Route::delete('works/gallery/{id}', [WorkController::class, 'deleteGalleryImage'])->name('works.gallery.delete');
@@ -110,10 +135,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/contact-messages', [ContractController::class, 'Adminindex'])->name('contact-messages.index');
     Route::get('/admin/contact-messages/{id}', [ContractController::class, 'Adminshow'])->name('contact-messages.show');
     Route::delete('/admin/contact-messages/{id}', [ContractController::class, 'Admindestroy'])->name('contact-messages.destroy');
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     
     Route::prefix('admin/orders')->name('admin.orders.')->group(function () {
