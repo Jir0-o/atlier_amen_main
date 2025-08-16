@@ -22396,6 +22396,7 @@ dl li {
 body {  
   /* background-image: linear-gradient(135deg, #4b0066, #0e0019); */
   color: #363636;
+  -webkit-text-stroke: #fff;
   background-size: cover;
   background-repeat: no-repeat;
   background-attachment: fixed;

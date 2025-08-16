@@ -79,7 +79,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('adminContract.index') }}">
                             <i class="mdi mdi-file-document-box menu-icon"></i>
-                            <span class="menu-title">Contract</span>
+                            <span class="menu-title">Contact</span>
                         </a>
                     </li>
                 </ul>
