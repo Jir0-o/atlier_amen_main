@@ -12,12 +12,12 @@
         <div class="artist-profile pt-md-5">
             <div class="row align-items-center">
                 <div class="col-md-5 col-sm-6">
-                    <img class="w-100 mb-4" src="{{ $about->image_path ? asset($about->image_path) : 'https://via.placeholder.com/300x200' }}" alt="Artist Profile" loading="lazy">
+                    <img class="w-100 mb-4" src="{{ $about?->image_path ? asset($about->image_path) : 'https://via.placeholder.com/300x200' }}" alt="Artist Profile" loading="lazy">
                 </div>
                 <div class="col-md-7 col-sm-6">
-                    <h2 class="cormorant m-0">{{$about->title}}</h2>
+                    <h2 class="cormorant m-0">{{$about?->title}}</h2>
                     <div class="rich-text jacques">
-                        {!! $about->body ?? '' !!}
+                        {!! $about?->body ?? '' !!}
                     </div>
                     <a class="btn btn-dark fs-4 cormorant" href="{{route('contact')}}">SAY HI</a>
                 </div>
