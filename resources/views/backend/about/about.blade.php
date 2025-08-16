@@ -48,7 +48,7 @@
                             <div class="col-md-12">
                                 <button type="submit" id="aboutSaveBtn" class="btn btn-primary w-100">Save</button>
                             </div>
-                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
