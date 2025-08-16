@@ -77,7 +77,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 p-3">
+            <div class="col-md-12 p-3">
                 <h4>Popular Purchase</h4>
                 <div class="table-responsive">
                     <table class="table table-striped">
@@ -108,7 +108,29 @@
                     </table>
                 </div>
             </div>
-            <div class="col-md-6 p-3"></div>
+            <div class="col-md-12 p-3">
+                <h4>Top buyer</h4>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#SL</th>
+                                <th>Name</th>
+                                <th>Item Buy</th>
+                                <th>Total spend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>01</td>
+                                <td>Atlier Amen</td>
+                                <td>25</td>
+                                <td>$ 4,958</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
