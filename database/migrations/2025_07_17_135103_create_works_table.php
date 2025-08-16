@@ -21,8 +21,8 @@ return new class extends Migration {
             $table->string('image_right_low')->nullable();
             $table->string('image_left')->nullable();
             $table->string('image_right')->nullable();
-            $table->float('price')->default(0);
-            $table->integer('quantity')->default(0);
+            $table->float('price')->default(0)->nullable();
+            $table->integer('quantity')->default(0)->nullable();
             $table->string('art_video')->nullable();
             $table->longText('details')->nullable();
             $table->boolean('is_active')->default(true);
