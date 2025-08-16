@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\FooterSetting;
 use App\Models\Work;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Category;
@@ -9,6 +10,9 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use App\Models\TempCart;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Blade;
+use App\Support\Feature;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,5 +40,12 @@ class AppServiceProvider extends ServiceProvider
                 ->whereNull('user_id')
                 ->update(['user_id' => $event->user->id]);
         });
+        // Share the footer setting with all views
+        View::composer('frontend.partials._footer', function ($view) {
+            $view->with('footer', FooterSetting::first());
+        });
+        
+        Paginator::useBootstrapFive();
+        Blade::if('feature', fn ($key) => Feature::enabled($key));
     }
 }

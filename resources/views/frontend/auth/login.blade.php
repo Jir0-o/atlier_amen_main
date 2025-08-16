@@ -140,7 +140,6 @@ $(function () {
       }
     })
     .fail(function (xhr) {
-      // Laravel often returns 419 for CSRF mismatch
       if (xhr.status === 419) {
         Swal.fire({
           icon: 'warning',
@@ -161,7 +160,17 @@ $(function () {
           title: 'Login Failed',
           text: json.message || 'Please check your credentials and try again.'
         });
-      } else {
+      } 
+      else if (xhr.status === 403) { 
+        var json = xhr.responseJSON || {};
+        showFieldErrors($form, json.errors || {});
+        Swal.fire({
+          icon: 'error',
+          title: 'Account Disabled',
+          text: json.message || 'Your account has been disabled. Please contact support.'
+        });
+      }
+      else {
         Swal.fire({
           icon: 'error',
           title: 'Server Error',

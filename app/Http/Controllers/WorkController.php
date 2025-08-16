@@ -113,6 +113,7 @@ class WorkController extends Controller
             'work_image_url'    => $work->work_image_url,
             'image_left_url'    => $work->image_left_url,
             'image_right_url'   => $work->image_right_url,
+            'art_video_url'     => $work->art_video,
             'work_price'        => $work->price,
             'work_quantity'     => $work->quantity,
             'gallery'           => $work->gallery->map(fn($g)=>[
@@ -123,48 +124,43 @@ class WorkController extends Controller
     }
 
 
+
     protected function saveImageVariants(\Illuminate\Http\UploadedFile $file, string $fullDir, string $lowDir, string $prefix): array
     {
         $this->ensureDirs([$fullDir, $lowDir]);
 
-        $ext = strtolower($file->getClientOriginalExtension());
-        if (!in_array($ext, ['jpg','jpeg','png','webp'])) {
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        if (!in_array($ext, ['jpg','jpeg','png','webp'], true)) {
             $ext = 'jpg';
         }
 
         $base = uniqid($prefix . '_') . '.' . $ext;
-        $fullPathAbs = public_path("$fullDir/$base");
-        $lowPathAbs  = public_path("$lowDir/$base");
 
+        $fullRel  = "$fullDir/$base";
+        $lowRel   = "$lowDir/$base";
+        $fullAbs  = public_path($fullRel);
+        $lowAbs   = public_path($lowRel);
+
+        $file->move(public_path($fullDir), $base);
+
+        // === LOW: generate compressed/scaled version ===
         $manager = new ImageManager(new GdDriver());
 
-        // Choose encoder based on extension
-        $encoderFull = match($ext) {
-            'png'   => new PngEncoder(),       
-            'webp'  => new WebpEncoder(quality: 90),
-            default => new JpegEncoder(quality: 90),
+        $encoderLow = match ($ext) {
+            'png'           => new PngEncoder(),  
+            'webp'          => new WebpEncoder(quality: 50),
+            'jpg','jpeg',   => new JpegEncoder(quality: 50),
+            default         => new JpegEncoder(quality: 50),
         };
 
-        $encoderLow = match($ext) {
-            'png'   => new PngEncoder(),    
-            'webp'  => new WebpEncoder(quality: 50),
-            default => new JpegEncoder(quality: 50),
-        };
-
-        // Full image
-        $manager->read($file->getRealPath())
-            ->encode($encoderFull)
-            ->save($fullPathAbs);
-
-        // Low image
-        $manager->read($file->getRealPath())
-            ->scale(width: 800)
+        $manager->read($fullAbs)
+            ->scale(width: 800)  
             ->encode($encoderLow)
-            ->save($lowPathAbs);
+            ->save($lowAbs);
 
         return [
-            'full' => "$fullDir/$base",
-            'low'  => "$lowDir/$base",
+            'full' => $fullRel, 
+            'low'  => $lowRel,   
         ];
     }
 
@@ -268,8 +264,12 @@ class WorkController extends Controller
 
             if ($request->hasFile('art_video')) {
                 $this->deleteIfExists($work->art_video);
-                $path = $request->file('art_video')->store($videoDir, 'public');
-                $work->art_video = $path;
+                $videoFile = $request->file('art_video');
+                $ext = strtolower($videoFile->getClientOriginalExtension() ?: 'mp4');
+                $name = uniqid('vid_') . '.' . $ext;
+                $this->ensureDirs([$videoDir]);
+                $videoFile->move(public_path($videoDir), $name);
+                $work->art_video = "$videoDir/$name";
             }
 
             // Assign fallback price/quantity for now; may get cleared if variants exist
@@ -532,6 +532,7 @@ class WorkController extends Controller
                                     'id' => $g->id,
                                     'url'=> $g->image_url,
                                 ])->values(),
+            'art_video'     => $work->art_video ? asset($work->art_video) : null,
             'created_at'    => $work->created_at?->format('Y-m-d H:i'),
             'updated_at'    => $work->updated_at?->format('Y-m-d H:i'),
             'variants'      => $variants,

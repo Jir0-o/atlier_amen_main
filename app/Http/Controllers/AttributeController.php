@@ -19,8 +19,7 @@ class AttributeController extends Controller
                 ->addColumn('action', function ($row) {
                     $edit = '<button class="btn btn-sm btn-primary editBtn" data-slug="' . $row->slug . '">Edit</button>';
                     $delete = '<button class="btn btn-sm btn-danger deleteBtn" data-slug="' . $row->slug . '">Delete</button>';
-                    $manage = '<button class="btn btn-sm btn-info manage-values" data-id="' . $row->id . '" data-name="' . e($row->name) . '" data-slug="' . $row->slug . '">Manage Values</button>';
-                    return "{$edit} {$delete} {$manage}";
+                    return "{$edit} {$delete}";
                 })
                 ->rawColumns(['action'])
                 ->make(true);

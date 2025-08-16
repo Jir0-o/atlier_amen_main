@@ -18,7 +18,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name', 'first_name', 'last_name', 'email', 'country', 'password',
+        'name', 'first_name', 'last_name', 'email','country','username','phone','date_of_birth','password',
     ];
 
     /**
@@ -42,5 +42,38 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the user's orders.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Get the user's wishlist.
+     */
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    /**
+     * Get the user's cart.
+     */
+    public function cart()
+    {
+        return $this->hasMany(TempCart::class);
+    }
+
+    public function shippingAddress()
+    {
+        return $this->hasOne(Address::class)->where('type','shipping');
+    }
+    public function billingAddress()
+    {
+        return $this->hasOne(Address::class)->where('type','billing');
     }
 }

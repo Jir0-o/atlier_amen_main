@@ -13,7 +13,7 @@
             </a>
         </li>
         <li class="nav-item pt-3">
-            <a class="nav-link d-block" href="index.html">
+            <a class="nav-link d-block" href="{{ route('dashboard') }}">
                 <img class="sidebar-brand-logo" src="assets/images/logo.svg" alt="" />
                 <img class="sidebar-brand-logomini" src="assets/images/logo-mini.svg" alt="" />
                 <div class="small font-weight-light pt-1"></div>
@@ -39,50 +39,124 @@
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#frontend_menu" aria-expanded="false"
                 aria-controls="frontend_menu">
-                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">Frontend</span>
+                <i class="mdi mdi-view-dashboard-outline menu-icon"></i>
+                <span class="menu-title">Work/Product</span>
                 <i class="menu-arrow"></i>
             </a>
             <div class="collapse" id="frontend_menu">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categories.index') }}">Work Category</a>
+                        <a class="nav-link" href="{{ route('categories.index') }}">
+                            <i class="mdi mdi-format-list-bulleted menu-icon"></i>
+                            <span class="menu-title">Work Category</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('adminAbout.index') }}">About</a>
+                        <a class="nav-link" href="{{ route('works.index') }}">
+                            <i class="mdi mdi-briefcase menu-icon"></i>
+                            <span class="menu-title">My Work</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        {{-- list nav item for about contract --}}
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#contact_menu" aria-expanded="false"
+                aria-controls="contact_menu">
+                <i class="mdi mdi-account-multiple menu-icon"></i>
+                <span class="menu-title">Admin Info</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="contact_menu">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('adminAbout.index') }}">
+                            <i class="mdi mdi-information menu-icon"></i>
+                            <span class="menu-title">About</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('adminContract.index') }}">Contract</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('contact-messages.index') }}">Contract Message</a>
+                        <a class="nav-link" href="{{ route('adminContract.index') }}">
+                            <i class="mdi mdi-file-document-box menu-icon"></i>
+                            <span class="menu-title">Contract</span>
+                        </a>
                     </li>
                 </ul>
             </div>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="collapse" href="#backend_menu" aria-expanded="false"
-                aria-controls="backend_menu">
-                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">Backend</span>
+            <a class="nav-link" data-toggle="collapse" href="#order_menu" aria-expanded="false"
+                aria-controls="order_menu">
+                <i class="mdi mdi-cart menu-icon"></i>
+                <span class="menu-title">Order</span>
                 <i class="menu-arrow"></i>
             </a>
-            <div class="collapse" id="backend_menu">
+            <div class="collapse" id="order_menu">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('works.index') }}">My Work</a>
+                        <a class="nav-link" href="{{ route('admin.orders.index') }}">
+                            <i class="mdi mdi-cart menu-icon"></i>
+                            <span class="menu-title">Order</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.orders.index') }}">Order</a>
+                        <a class="nav-link" href="{{ route('contact-messages.index') }}">
+                            <i class="mdi mdi-message-text menu-icon"></i>
+                            <span class="menu-title">Contact Messages</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#attribute_menu" aria-expanded="false"
+                aria-controls="attribute_menu">
+                <i class="mdi mdi-format-list-bulleted menu-icon"></i>
+                <span class="menu-title">Attributes</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="attribute_menu">
+                <ul class="nav flex-column sub-menu">                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.attributes.index') }}">
+                            <i class="mdi mdi-tag menu-icon"></i>
+                            <span class="menu-title">Attribute</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.attributes.index') }}">Attribute</a>
+                        <a class="nav-link" href="{{ route('admin.attribute-values.index') }}">
+                            <i class="mdi mdi-tag-multiple menu-icon"></i>
+                            <span class="menu-title">Attribute Value</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+                <i class="mdi mdi-account-multiple menu-icon"></i>
+                <span class="menu-title">Settings <i class="menu-arrow"></i></span>
+            </a>
+            <div class="collapse" id="ui-basic">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('users.index') }}">
+                            <i class="mdi mdi-account menu-icon"></i>
+                            <span class="menu-title">Users</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.attribute-values.index') }}">Attribute Value</a>
+                        <a class="nav-link" href="{{ route('admin.shop.features.edit') }}">
+                            <i class="mdi mdi-cart menu-icon"></i>
+                            <span class="menu-title">Shop Settings</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('contact-messages.index') }}">Contract Message</a>
+                        <a class="nav-link" href="{{ route('admin.footer.settings.index') }}">
+                            <i class="mdi mdi-footprint menu-icon"></i>
+                            <span class="menu-title">Footer Settings</span>
+                        </a>
                     </li>
                 </ul>
             </div>

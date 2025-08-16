@@ -137,7 +137,6 @@ $(function(){
         .done(resp => {
             if(resp.status === 'success'){
                 Swal.fire({ icon: 'success', title: 'Saved!', text: resp.message, timer:1200, showConfirmButton:false })
-                .then(()=> location.reload());
             }
         })
         .fail(xhr => {
