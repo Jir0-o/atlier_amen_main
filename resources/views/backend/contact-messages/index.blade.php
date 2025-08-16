@@ -52,58 +52,60 @@
         </div>
     </div>
 
-    {{-- View Details Modal --}}
+    <!-- Contact Message Modal (Bootstrap 5) -->
     <div class="modal fade" id="contactMessageModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
-            <div class="modal-content shadow-lg border-0" style="border-radius: 12px;">
-                
-                <!-- Header -->
-                <div class="modal-header bg-gradient text-white" 
-                    style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); border-radius: 12px 12px 0 0;">
-                    <h5 id="contactMessageModalTitle" class="modal-title fw-bold">
-                        <i class="bi bi-envelope-paper me-2"></i> Message Details
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+            <div class="modal-content shadow-lg border-0 rounded-3">
 
-                <!-- Body -->
-                <div class="modal-body bg-light" style="border-radius: 0 0 12px 12px;">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-3 text-secondary">Name:</dt>
-                        <dd class="col-sm-9 fw-semibold" id="view_name"></dd>
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white rounded-top-3">
+                <h5 id="contactMessageModalTitle" class="modal-title fw-semibold m-0">
+                <i class="bi bi-envelope-paper me-2"></i> Message Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
-                        <dt class="col-sm-3 text-secondary">Email:</dt>
-                        <dd class="col-sm-9 text-primary" id="view_email"></dd>
+            <!-- Body -->
+            <div class="modal-body">
+                <dl class="row align-items-start mb-0 small-gutters">
+                <dt class="col-sm-3 text-secondary mb-2">Name:</dt>
+                <dd class="col-sm-9 fw-semibold mb-2" id="view_name"></dd>
 
-                        <dt class="col-sm-3 text-secondary">Contact:</dt>
-                        <dd class="col-sm-9" id="view_number"></dd>
+                <dt class="col-sm-3 text-secondary mb-2">Email:</dt>
+                <dd class="col-sm-9 text-semibold mb-2" id="view_email"></dd>
 
-                        <dt class="col-sm-3 text-secondary">Message:</dt>
-                        <dd class="col-sm-9" id="view_message" style="white-space:pre-line; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd;"></dd>
+                <dt class="col-sm-3 text-secondary mb-2">Contact:</dt>
+                <dd class="col-sm-9 mb-2" id="view_number"></dd>
 
-                        <dt class="col-sm-3 text-secondary">IP Address:</dt>
-                        <dd class="col-sm-9 text-muted" id="view_ip"></dd>
+                <dt class="col-sm-3 text-secondary mb-2">Message:</dt>
+                <dd class="col-sm-9 mb-3" id="view_message"
+                    style="white-space:pre-line;background:#0f0f0f;border:1px solid #e5e7eb;padding:10px;border-radius:.5rem;"></dd>
 
-                        <dt class="col-sm-3 text-secondary">User Agent:</dt>
-                        <dd class="col-sm-9 text-muted small" id="view_ua" style="word-break:break-all;"></dd>
+                <dt class="col-sm-3 text-secondary mb-2">IP Address:</dt>
+                <dd class="col-sm-9 text-muted mb-2" id="view_ip"></dd>
 
-                        <dt class="col-sm-3 text-secondary">Submitted:</dt>
-                        <dd class="col-sm-9" id="view_created"></dd>
-                    </dl>
-                </div>
+                <dt class="col-sm-3 text-secondary mb-2">User Agent:</dt>
+                <dd class="col-sm-9 text-muted small mb-2" id="view_ua" style="word-break:break-all;"></dd>
 
-                <!-- Footer -->
-                <div class="modal-footer bg-light d-flex justify-content-between" style="border-radius: 0 0 12px 12px;">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle"></i> Close
-                    </button>
-                    <button type="button" class="btn btn-danger" id="modalDeleteBtn" data-id="">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
-                </div>
+                <dt class="col-sm-3 text-secondary mb-0">Submitted:</dt>
+                <dd class="col-sm-9 mb-0" id="view_created"></dd>
+                </dl>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer rounded-bottom-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle me-1"></i> Close
+                </button>
+                <button type="button" class="btn btn-danger" id="modalDeleteBtn" data-id="">
+                <i class="bi bi-trash me-1"></i> Delete
+                </button>
+            </div>
+
             </div>
         </div>
     </div>
+
 </div>
 @endsection
 

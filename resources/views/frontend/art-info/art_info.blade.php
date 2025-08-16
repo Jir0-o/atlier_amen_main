@@ -207,7 +207,9 @@
                             </div>
 
                             {{-- Cart / Buy --}}
+                            @feature('shop_enabled')
                             <div class="row">
+                                @feature('cart_enabled')
                                 <div class="col-md-4 mb-2">
                                     <div class="d-flex flex-column">
                                         <button
@@ -219,6 +221,8 @@
                                         </button>
                                     </div>
                                 </div>
+                                @endfeature
+                                @feature('buy_now_enabled')
                                 <div class="col-md-4 mb-2">
                                     <div class="d-flex flex-column">
                                         <button
@@ -230,6 +234,8 @@
                                         </button>
                                     </div>
                                 </div>
+                                @endfeature
+                                @feature('wishlist_enabled')
                                 <div class="col-md-4">
                                     <div class="d-flex flex-column">
                                         <button
@@ -241,7 +247,9 @@
                                         </button>
                                     </div>
                                 </div>
+                                @endfeature
                             </div>
+                            @endfeature
 
                             
                             {{-- Share --}}

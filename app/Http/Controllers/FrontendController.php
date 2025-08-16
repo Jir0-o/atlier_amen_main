@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\About;
 use App\Models\Category;
 use App\Models\Contract;
+use App\Models\FooterSetting;
 use App\Models\Work;
 use COM;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\Order;
 
 class FrontendController extends Controller
 {
@@ -34,12 +37,31 @@ class FrontendController extends Controller
 
     public function exhibition()
     {
-        $categories = Category::where('is_active', true)->where('is_vip', true)->latest()->get();
-        $vipWorks = Work::where('is_active', true)->where('category_id', '=', $categories[0]->id)->latest()->paginate(10);
-        
-        return view('frontend.works.vip_exhibition', compact('categories', 'vipWorks'));
-    }
+        $user = auth()->user();
 
+        $categories = Category::where('is_active', true)
+            ->where('is_vip', true)
+            ->latest()
+            ->get();
+
+        $hasVipAccess = false;
+        if ($user) {
+            $hasVipAccess = Order::where('user_id', $user->id)->exists();
+        }
+
+        $categoryId = optional($categories->first())->id;
+
+        if ($hasVipAccess && $categoryId) {
+            $vipWorks = Work::where('is_active', true)
+                ->where('category_id', $categoryId)
+                ->latest()
+                ->paginate(12);
+        } else {
+            $vipWorks = new LengthAwarePaginator([], 0, 12); 
+        }
+
+        return view('frontend.works.vip_exhibition', compact('categories', 'vipWorks', 'hasVipAccess'));
+    }
     public function cart()
     {
         $featuredWorks = Work::where('is_featured', 1)

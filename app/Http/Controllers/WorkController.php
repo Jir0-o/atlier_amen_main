@@ -113,6 +113,7 @@ class WorkController extends Controller
             'work_image_url'    => $work->work_image_url,
             'image_left_url'    => $work->image_left_url,
             'image_right_url'   => $work->image_right_url,
+            'art_video_url'     => $work->art_video,
             'work_price'        => $work->price,
             'work_quantity'     => $work->quantity,
             'gallery'           => $work->gallery->map(fn($g)=>[
@@ -531,6 +532,7 @@ class WorkController extends Controller
                                     'id' => $g->id,
                                     'url'=> $g->image_url,
                                 ])->values(),
+            'art_video'     => $work->art_video ? asset($work->art_video) : null,
             'created_at'    => $work->created_at?->format('Y-m-d H:i'),
             'updated_at'    => $work->updated_at?->format('Y-m-d H:i'),
             'variants'      => $variants,

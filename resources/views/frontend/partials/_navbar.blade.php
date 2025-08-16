@@ -14,6 +14,8 @@
                     <a href="#" class="fs-5 me-md-3" data-bs-toggle="modal" data-bs-target="#searchModal">
                         <i class="ri-search-line"></i>
                     </a>
+                    @feature('shop_enabled')
+                    @feature('cart_enabled')
                     <a href="{{ route('cart') }}" class="fs-5 me-md-3 position-relative">
                         <i class="ri-shopping-cart-2-line"></i>
                         @if(session('cart_count', 0) > 0)
@@ -22,9 +24,13 @@
                             </span>
                         @endif
                     </a>
+                    @endfeature
+                    @feature('wishlist_enabled')
                     <a href="{{ route('wishlist') }}" class="fs-5 me-md-3">
                         <i class="ri-heart-2-line"></i>
                     </a>
+                    @endfeature
+                    @endfeature
                     @guest
                         <a href="{{ route('frontend.login') }}" class="fs-5 me-md-3">
                             <i class="ri-user-line"></i>
@@ -82,6 +88,7 @@
                             </span>
                         </a>
                     </li>
+                    @feature('shop_enabled')
                     <li class="nav-item">
                         <a class="nav-link py-0 {{ request()->routeIs('shop') ? 'active' : '' }}" href="{{ route('shop') }}">
                             Shop
@@ -90,6 +97,7 @@
                             </span>
                         </a>
                     </li>
+                    @endfeature
                     <li class="nav-item">
                         <a class="nav-link py-0 {{ request()->routeIs('exhibition') ? 'active' : '' }}" href="{{ route('exhibition') }}">
                             VIP Exhibition

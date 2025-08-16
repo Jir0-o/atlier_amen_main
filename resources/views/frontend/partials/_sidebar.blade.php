@@ -13,7 +13,7 @@
       </a>
     </li>
     <li class="nav-item pt-3">
-      <a class="nav-link d-block" href="index.html">
+      <a class="nav-link d-block" href="{{ route('index') }}">
         <img class="sidebar-brand-logo" src="assets/images/logo.svg" alt="" />
         <img class="sidebar-brand-logomini" src="assets/images/logo-mini.svg" alt="" />
         <div class="small font-weight-light pt-1">Responsive Dashboard</div>
@@ -31,7 +31,7 @@
       <span class="nav-item-head">Template Pages</span>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="index.html">
+      <a class="nav-link" href="{{ route('index') }}">
         <i class="mdi mdi-compass-outline menu-icon"></i>
         <span class="menu-title">Dashboard</span>
       </a>

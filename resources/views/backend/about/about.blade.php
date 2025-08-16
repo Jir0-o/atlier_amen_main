@@ -151,8 +151,6 @@ $(function() {
                     timer: 1200,
                     showConfirmButton: false
                 }).then(() => {
-                    // You asked: reload page after save
-                    window.location.reload();
                 });
             } else {
                 Swal.fire({

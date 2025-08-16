@@ -10,6 +10,8 @@ return new class extends Migration {
             $table->string('username', 100)->nullable()->unique()->after('last_name');
             $table->string('phone', 50)->nullable()->after('country');
             $table->date('date_of_birth')->nullable()->after('last_name');
+            $table->boolean('is_active')->default(true)->after('date_of_birth');
+            $table->boolean('is_verified')->default(false)->after('is_active');
         });
     }
     public function down(): void {

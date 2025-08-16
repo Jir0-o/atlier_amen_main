@@ -44,8 +44,40 @@ class CheckoutController extends Controller
         $shippingCharge = 10.00;
         $grandTotal     = $subtotal + $shippingCharge;
 
+        $shipping = null;
+        $billing  = null;
+        $prefill  = [];
+        $billingSameDefault = false;
+
+        if ($user) {
+            $user->load(['shippingAddress','billingAddress']);
+            $shipping = $user->shippingAddress;
+            $billing  = $user->billingAddress;
+
+            // Prefill ONLY Shipping fields from DB (names from users, address from shippingAddress)
+            if ($shipping) {
+                $prefill = [
+                    'f_name'  => $user->first_name ?? '',
+                    'l_name'  => $user->last_name ?? '',
+                    'address' => $shipping->street ?? '',
+                    'city'    => $shipping->city ?? '',
+                    'state'   => $shipping->state ?? '',
+                    'zip'     => $shipping->zip ?? '',
+                    'country' => $shipping->country ?? '',
+                ];
+            }
+
+            // Checkbox default: tick only if there is address data AND zip matches
+            $hasAnyAddress = (bool) ($shipping || $billing);
+            $billingSameDefault = $hasAnyAddress
+                && $shipping && $billing
+                && (trim((string)$shipping->zip) !== '' && trim((string)$billing->zip) !== '')
+                && (trim((string)$shipping->zip) === trim((string)$billing->zip));
+        }
+
         return view('frontend.purchase.checkout', compact(
-            'items','subtotal','totalQty','shippingCharge','grandTotal'
+            'items','subtotal','totalQty','shippingCharge','grandTotal',
+            'shipping','billing','prefill','billingSameDefault'
         ));
     }
 

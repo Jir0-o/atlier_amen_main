@@ -42,63 +42,61 @@
             {{-- Shipping --}}
             <h5 class="mt-3">Shipping Address</h5>
             <div class="row">
-              @foreach(['f_name'=>'First Name','l_name'=>'Last Name'] as $field=>$label)
-                <div class="col-md-6 p-2">
-                  <label class="form-label" for="{{ $field }}">{{ $label }}</label>
-                  <input type="text"
-                         class="form-control @error($field) is-invalid @enderror"
-                         name="{{ $field }}"
-                         id="{{ $field }}"
-                         value="{{ old($field) }}"
-                         placeholder="Enter your {{ strtolower($label) }}">
-                  @error($field)
-                    <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-                </div>
-              @endforeach
-
-              <div class="col-12 p-2">
-                <label class="form-label" for="address">Street Address</label>
-                <textarea class="form-control @error('address') is-invalid @enderror"
-                          name="address"
-                          id="address"
-                          rows="3"
-                          placeholder="Write your street information">{{ old('address') }}</textarea>
-                @error('address')
+            @foreach(['f_name'=>'First Name','l_name'=>'Last Name'] as $field=>$label)
+              <div class="col-md-6 p-2">
+                <label class="form-label" for="{{ $field }}">{{ $label }}</label>
+                <input type="text"
+                      class="form-control @error($field) is-invalid @enderror"
+                      name="{{ $field }}"
+                      id="{{ $field }}"
+                      value="{{ old($field, $prefill[$field] ?? '') }}"
+                      placeholder="Enter your {{ strtolower($label) }}">
+                @error($field)
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
               </div>
+            @endforeach
 
-              @foreach(['city','state','zip','country'] as $field)
-                <div class="col-md-{{ $field==='city' ? '4' : ($field==='country'? '12':'4') }} p-2">
-                  <label class="form-label" for="{{ $field }}">{{ ucfirst($field) }}</label>
-                  <input type="text"
-                         class="form-control @error($field) is-invalid @enderror"
-                         name="{{ $field }}"
-                         id="{{ $field }}"
-                         value="{{ old($field) }}"
-                         placeholder="Enter your {{ $field }}">
-                  @error($field)
-                    <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-                </div>
-                @if($field==='country') @break @endif
-              @endforeach
+            <div class="col-12 p-2">
+              <label class="form-label" for="address">Street Address</label>
+              <textarea class="form-control @error('address') is-invalid @enderror"
+                        name="address" id="address" rows="3"
+                        placeholder="Write your street information">{{ old('address', $prefill['address'] ?? '') }}</textarea>
+              @error('address')
+                <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+            </div>
+
+            @foreach(['city','state','zip','country'] as $field)
+              <div class="col-md-{{ $field==='city' ? '4' : ($field==='country'? '12':'4') }} p-2">
+                <label class="form-label" for="{{ $field }}">{{ ucfirst($field) }}</label>
+                <input type="text"
+                      class="form-control @error($field) is-invalid @enderror"
+                      name="{{ $field }}"
+                      id="{{ $field }}"
+                      value="{{ old($field, $prefill[$field] ?? '') }}"
+                      placeholder="Enter your {{ $field }}">
+                @error($field)
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+              @if($field==='country') @break @endif
+            @endforeach
 
             </div>
 
             {{-- Billing --}}
             <h5 class="mt-4">Billing Address</h5>
             <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox"
-                     name="billing_form" id="billing_form"
-                     {{ old('billing_form', true) ? 'checked' : '' }}>
+            <input class="form-check-input" type="checkbox"
+                  name="billing_form" id="billing_form"
+                  {{ old('billing_form', $billingSameDefault) ? 'checked' : '' }}>
               <label class="form-check-label" for="billing_form">
                 Same as shipping address
               </label>
             </div>
 
-            <div id="billing_fields" @if(old('billing_form', true)) style="display:none;" @endif>
+            <div id="billing_fields" @if(old('billing_form', $billingSameDefault)) style="display:none;" @endif>
               <div class="row">
                 @foreach([ 
                   'bill_f_name'=>'First Name','bill_l_name'=>'Last Name',

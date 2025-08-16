@@ -2,6 +2,15 @@
 
 @section('title', 'Works')
 
+<style>
+    .modal .select2-container {
+        z-index: 1061;
+    }
+        .modal .select2-container .select2-dropdown {
+        z-index: 1061;
+    }
+</style>
+
 @section('content')
     <div class="content-wrapper">
         {{-- Table --}}
@@ -143,9 +152,13 @@
                                         accept="video/mp4,video/ogg,video/webm">
                                     <span class="text-danger error-text art_video_error"></span>
                                     <div class="mt-2">
-                                        <video id="preview_art_video" controls style="max-width:120px; display:none;">
-                                            <source src="" type="video/mp4">
-                                        </video>
+                                    <video id="preview_art_video"
+                                        style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;"
+                                        muted
+                                        playsinline
+                                        autoplay
+                                        controls>
+                                    </video>
                                     </div>
                                 </div>
 
@@ -162,8 +175,8 @@
                                 <input type="number" name="quantity" id="work_quantity" class="form-control" min="0">
                                 <span class="text-danger error-text quantity_error"></span>
                             </div> --}}
-                                <hr>
-                                <h5>Attributes & Variants</h5>
+                            <div class="col-md-12">
+                             <label class="form-label" for="attributes">Attributes & Variants</label>
                                 <p class="text-muted small">Pick multiple values per attribute. Then configure SKU / price
                                     / stock for each combination.</p>
 
@@ -187,9 +200,10 @@
                                         </div>
                                     @endforeach
                                 </div>
+                                </div>
 
                                 <div class="table-responsive mb-2">
-                                    <table class="table table-bordered" id="variantTable">
+                                    <table class="table table-bordered text-light" id="variantTable">
                                         <thead>
                                             <tr>
                                                 <th>Combination</th>
@@ -261,6 +275,13 @@
                                     <img id="view_work_right" src="" class="img-thumbnail"
                                         style="max-width:100px;">
                                 </div>
+                                <div class="mt-3">
+                                <video id="view_work_video"
+                                        style="max-width:100%;max-height:260px;border-radius:6px;display:none;"
+                                        controls
+                                        playsinline>
+                                </video>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <dl class="row mb-0">
@@ -290,10 +311,10 @@
                             <div class="col-12">
                                 <hr>
                                 <h6>Variants</h6>
-                                <div id="view_work_variants" class="table-responsive mb-3">
+                                <div id="view_work_variants" class="table-responsive mb-3 text-light">
 
                                 </div>
-                                <div id="view_work_total_stock" class="small text-muted"></div>
+                                <div id="view_work_total_stock" class="small text-light"></div>
                             </div>
 
                         </div>
@@ -342,6 +363,67 @@
                     'X-CSRF-TOKEN': $('meta[name=\"csrf-token\"]').attr('content')
                 }
             });
+
+            function resolveAbsUrl(u) {
+                if (!u) return null;
+                if (/^https?:\/\//i.test(u)) return u;
+                return window.location.origin + '/' + u.replace(/^\/+/, '');
+                }
+
+                function showVideo(url) {
+                const v = document.getElementById('preview_art_video');
+                if (!v) return;
+
+                const abs = resolveAbsUrl(url);
+                if (!abs) {
+                    $(v).hide();
+                    return;
+                }
+
+                // Clear any previous src then set new
+                v.removeAttribute('src');
+                v.src = abs;
+
+                // (Re)load and show
+                v.load();
+                $(v).show();
+
+                // Try to play (some browsers require user gesture)
+                const p = v.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(() => {
+                    // If autoplay is blocked, keep controls visible so user can start it
+                    v.controls = true;
+                    });
+                }
+                }
+
+            function setAndPlayVideo($videoEl, url) {
+                const v = $videoEl.get(0);
+                if (!v) return;
+                const abs = resolveAbsUrl(url);
+                if (!abs) {
+                    $videoEl.hide();
+                    v.pause?.();
+                    v.removeAttribute('src');
+                    return;
+                }
+                // Reset previous src to force reload
+                v.pause?.();
+                v.removeAttribute('src');
+                v.src = abs;
+                v.load();
+                $videoEl.show();
+                const p = v.play?.();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(() => {
+                    // If autoplay is blocked, keep controls visible
+                    v.controls = true;
+                    });
+                }
+            }
+
+
 
             // DataTable
             let workTable = $('#workTable').DataTable({
@@ -409,14 +491,6 @@
                 ]
             });
 
-            $('#art_video').on('change', function() {
-                const file = this.files[0];
-                if (!file) return;
-                const url = URL.createObjectURL(file);
-                $('#preview_art_video source').attr('src', url);
-                $('#preview_art_video').show()[0].load();
-            });
-
             // Preview click (lightbox)
             $(document).on('click', '.preview-img', function() {
                 let src = $(this).data('src');
@@ -438,12 +512,25 @@
                             placeholder: 'Select ' + $(this).data('attribute-name'),
                             allowClear: true,
                             width: '100%',
-                            theme: 'bootstrap-5', // adjust if your admin template uses another style or omit
+                            theme: 'bootstrap-5', 
                             dropdownParent: $('#workModal')
                         });
                     }
                 });
             }
+            $('#art_video').on('change', function () {
+                const file = this.files && this.files[0];
+                if (!file) return;
+
+                const objectUrl = URL.createObjectURL(file);
+                showVideo(objectUrl);
+
+                // Free the blob URL after it’s loaded
+                $('#preview_art_video').one('loadeddata', function(){
+                    URL.revokeObjectURL(objectUrl);
+                });
+            });
+
 
             // Cartesian product
             function cartesian(arrays) {
@@ -644,6 +731,7 @@
 
             $(document).on('shown.bs.modal', '#workModal', function() {
                 initAttributeSelects();
+                $('.select2-attribute').trigger('change.select2');
             });
             $('#work_name').on('input', function() {
                 const workName = $(this).val();
@@ -680,6 +768,7 @@
                 $('.modal-title', '#workModal').text('Edit Work');
 
                 $.get("{{ url('works') }}/" + id + "/edit", function(data) {
+                    console.log(data);
                     $('#work_id').val(data.id);
                     $('#work_category_id').val(data.category_id);
                     $('#work_name').val(data.name);
@@ -687,7 +776,15 @@
                     $('#work_tags').val(data.tags);
                     $('#work_details').val(data.details);
                     // is_active is a select
-                    $('#work_is_active').val(data.is_active);
+                    $('#work_is_active').val(data.is_active ? "1" : "0");
+
+                    if (data.art_video_url) {
+                        showVideo(data.art_video_url);
+                        } else {
+                        $('#preview_art_video').hide().get(0)?.pause();
+                        $('#preview_art_video').removeAttr('src');
+                    }
+
 
                     // main previews
                     if (data.work_image_url) {
@@ -702,22 +799,27 @@
 
                     // existing gallery thumbs
                     if (data.gallery && data.gallery.length) {
-                        $('#existing_gallery_wrapper').show();
-                        const $list = $('#existing_gallery_list').empty();
-                        data.gallery.forEach(function(g) {
-                            $list.append(`
-                        <div class="position-relative d-inline-block">
-                            <img src="${g.image_url}" class="img-thumbnail" style="max-width:80px;">
-                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 deleteGalleryImgBtn" data-id="${g.id}" title="Delete">×</button>
-                        </div>`);
-                        });
+                    $('#existing_gallery_wrapper').show();
+                    const $list = $('#existing_gallery_list').empty();
+                    data.gallery.forEach(function(g) {
+                    $list.append(`
+                        <div class="d-inline-flex align-items-center me-2 mb-2" data-gid="${g.id}">
+                            <img src="${g.image_url}" class="img-thumbnail" 
+                                style="width:80px;height:80px;object-fit:cover;">
+                            <button type="button"
+                                    class="btn btn-sm btn-danger ms-1 deleteGalleryImgBtn"
+                                    data-id="${g.id}" title="Delete">×</button>
+                        </div>
+                    `);
+                    });
                     } else {
-                        $('#existing_gallery_wrapper').hide();
+                    $('#existing_gallery_wrapper').hide();
                     }
 
                     initAttributeSelects();
-
-                    populateVariantsOnEdit(data);
+                        setTimeout(() => {
+                        populateVariantsOnEdit(data);
+                    }, 0);
 
                     $('#workModal').modal('show');
                 });
@@ -733,6 +835,13 @@
                     $('#view_work_image').attr('src', data.work_image);
                     $('#view_work_left').attr('src', data.image_left);
                     $('#view_work_right').attr('src', data.image_right);
+                    if (data.art_video) {
+                        setAndPlayVideo($('#view_work_video'), data.art_video);
+                        } else {
+                        const v = $('#view_work_video').get(0);
+                        if (v) { v.pause?.(); v.removeAttribute('src'); }
+                        $('#view_work_video').hide();
+                    }
                     $('#view_work_category').text(data.category || '—');
                     $('#view_work_name').text(data.name);
                     $('#view_work_date').text(data.work_date || '—');
@@ -763,7 +872,7 @@
                         });
 
                         const table = `
-                    <table class="table table-sm table-bordered">
+                    <table class="table table-sm table-bordered text-light">
                         <thead>
                             <tr>
                                 <th>Combination</th>
@@ -822,33 +931,37 @@
 
             // Delete gallery image (edit modal)
             $('body').on('click', '.deleteGalleryImgBtn', function() {
-                const gid = $(this).data('id');
-                Swal.fire({
-                    title: 'Delete image?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Delete'
-                }).then(res => {
-                    if (res.isConfirmed) {
-                        $.ajax({
-                            url: "{{ url('works/gallery') }}/" + gid,
-                            type: 'DELETE',
-                            success: function(resp) {
-                                Swal.fire('Deleted', resp.message, 'success');
-                                // Remove thumbnail
-                                $('.deleteGalleryImgBtn[data-id=\"' + gid + '\"]')
-                                    .closest('div.position-relative').remove();
-                                // Hide wrapper if empty
-                                if (!$('#existing_gallery_list').children().length) {
-                                    $('#existing_gallery_wrapper').hide();
-                                }
-                            },
-                            error: function() {
-                                Swal.fire('Error', 'Failed to delete.', 'error');
-                            }
-                        });
+            const gid = $(this).data('id');
+
+            Swal.fire({
+                title: 'Delete image?',
+                text: 'This cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete'
+            }).then(res => {
+                if (!res.isConfirmed) return;
+
+                $.ajax({
+                url: "{{ url('works/gallery') }}/" + gid,
+                type: 'DELETE',
+                success: function(resp) {
+                    Swal.fire('Deleted', resp.message || 'Gallery image removed.', 'success');
+
+                    // Remove the thumbnail wrapper
+                    $('#existing_gallery_list').find(`[data-gid="${gid}"]`).remove();
+
+                    // Hide wrapper if empty
+                    if (!$('#existing_gallery_list').children().length) {
+                    $('#existing_gallery_wrapper').hide();
                     }
+                },
+                error: function(xhr) {
+                    const msg = xhr.responseJSON?.message || 'Failed to delete.';
+                    Swal.fire('Error', msg, 'error');
+                }
                 });
+            });
             });
 
             // Feature button
@@ -967,6 +1080,8 @@
                 $('#work_gallery_preview').empty();
                 $('#existing_gallery_wrapper').hide();
                 $('#work_is_active').prop('checked', true);
+                $('#art_video').val('');
+                $('#preview_art_video').removeAttr('src').hide();
                 //reset variants
                 $('#variants').empty();
                 $('#variant_errors').text('');
@@ -974,6 +1089,8 @@
                 $('#variant_price').val('');
                 $('#variant_sku').val('');
                 $('#variant_quantity').val('');
+                $('#variantTable tbody').empty();
+                $('#variants_input').val('[]');
 
             }
 
