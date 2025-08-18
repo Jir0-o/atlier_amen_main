@@ -202,8 +202,12 @@
                             {{-- Live Variant Price/Stock --}}
                             <div class="mt-3">
                                 <h4 class="playfair fw-bold mb-2">Price: <strong id="variantPrice">—</strong></h4>
-                                <h4 class="playfair fw-bold mb-3"><strong id="variantStock"></strong></h4>
+                                <h4 class="playfair fw-bold mb-3"> Stock: <strong id="variantStock"></strong></h4>
                                 <small id="lowStockHint" class="text-warning" style="display:none;">Only <span id="lowStockCount">0</span> left — order soon.</small>
+                            </div>
+
+                            <div id="outOfStockGlobal" class="alert alert-warning mt-3" style="display:none;">
+                              Product is out of stock.
                             </div>
 
                             {{-- Cart / Buy --}}
@@ -337,6 +341,17 @@ $(function () {
   var ADD_TO_CART_URL = "{{ route('cart.add') }}";
   var BUY_NOW_URL     = "{{ route('cart.buyNow') }}";
 
+  var ALL_OUT = @json($allOut ?? false);
+
+    var IN_STOCK_VALUE_IDS = new Set();
+  (VARIANTS || []).forEach(function(v) {
+    if (v.stock == null || +v.stock > 0) {
+      (v.value_ids || []).forEach(function(valId){
+        IN_STOCK_VALUE_IDS.add(parseInt(valId,10));
+      });
+    }
+  });
+
   // ====== Helpers ======
   function csrfHeader() { return { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }; }
   function toastOk(msg){ if (window.Swal) Swal.fire({icon:'success',title:msg,timer:1200,showConfirmButton:false}); else alert(msg); }
@@ -386,10 +401,8 @@ $(function () {
   // Stock UI: only show number & note if 1..3 left; otherwise show "—"
   function applyStockUI($el, stock){
     $el.text('—').removeClass('text-danger');
-    $el.siblings('.low-note').remove();
-    if (stock != null && !isNaN(+stock) && +stock > 0 && +stock <= 3) {
-      $el.text(+stock).addClass('text-danger')
-        .after('<span class="low-note text-warning ms-2">(Only ' + (+stock) + ' left)</span>');
+    if (stock > 0) {
+      $el.text(stock).addClass('text-danger');
     }
   }
 
@@ -409,6 +422,14 @@ $(function () {
 
   // Seed initial UI with lowest price (or base)
   setMainVariantUI(null);
+
+  if (ALL_OUT) {
+    $('.btn-add-to-cart, .btn-buy-now').hide();
+    $('#outOfStockGlobal').show();
+  } else {
+    $('.btn-add-to-cart, .btn-buy-now').show();
+    $('#outOfStockGlobal').hide();
+  }
 
   var $box       = $('.indi-img-box.recent-img-box');
   var $mainImg   = $('#indi-img-preview');
@@ -542,14 +563,30 @@ $(function () {
     }
   }
 
-  function openVariantModal(action){
-    pendingAction = action;
-    selectedValues = {};                 
-    $('.js-attr-select-modal').val('');  
-    $('#buyQtyModal').val(1).attr('max','');
-    refreshModalSummary();
-    $('#variantPickerModal').modal('show');
-  }
+    function openVariantModal(action){
+      pendingAction = action;
+      selectedValues = {};
+      $('.js-attr-select-modal').val('');
+
+      // Disable options that are always OOS
+      $('.js-attr-select-modal').each(function(){
+        $(this).find('option').each(function(){
+          var val = parseInt($(this).attr('value') || '0', 10);
+          if (!val) return; // skip placeholder
+          var ok = IN_STOCK_VALUE_IDS.has(val);
+          $(this).prop('disabled', !ok);
+          // Optional: mark text
+          var t = $(this).text().replace(/\s*\(Out of stock\)$/, '');
+          if (!ok) t += ' (Out of stock)';
+          $(this).text(t);
+        });
+      });
+
+      $('#buyQtyModal').val(1).attr('max','');
+      refreshModalSummary();
+      $('#variantPickerModal').modal('show');
+    }
+
 
   // keep qty within [1..max]
   $('#buyQtyModal').on('input change', function(){
@@ -597,7 +634,10 @@ $(function () {
       data: JSON.stringify(payload)
     })
     .done(function(resp){
+
       if (resp && resp.status === 'success') {
+        //refesh the page
+        window.location.reload();
         if (typeof resp.cart_count !== 'undefined') $('#mini-cart-count').text(resp.cart_count);
         toastOk('Added to cart');
       } else {

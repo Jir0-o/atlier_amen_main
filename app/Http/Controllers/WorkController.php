@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AttributeValue;
+use App\Models\TempCart;
 use App\Models\Work;
 use App\Models\WorkGallery;
 use App\Models\Category;
@@ -632,57 +633,81 @@ class WorkController extends Controller
     }
 
 
-    public function workShow(Work $work)
+    public function workShow(Request $request, Work $work)
     {
-        $work->load([
-            'category',
-            'gallery',
-            'variants.attributeValues.attribute'
-        ]);
+        // Only show active work; eager-load everything needed
+        $work = Work::query()
+            ->whereKey($work->id)
+            ->where('is_active', 1)
+            ->with(['category','gallery','variants.attributeValues.attribute'])
+            ->firstOrFail();
 
+        // Figure out "who" the customer is (user or guest session)
+        $user    = $request->user();
+        $session = $request->session()->getId();
 
-        $variants = $work->variants->map(function ($v) {
+        // Sum ONLY this user's/session's cart quantities for this work's variants
+        $holds = TempCart::query()
+            ->select('work_variant_id', DB::raw('SUM(quantity) AS qty'))
+            ->where('work_id', $work->id)
+            ->where(function($q) use ($user, $session) {
+                if ($user) $q->where('user_id', $user->id);
+                else $q->whereNull('user_id')->where('session_id', $session);
+            })
+            ->groupBy('work_variant_id')
+            ->pluck('qty', 'work_variant_id'); // [variant_id => qty]
+
+        // Build variants array with *effective* stock for THIS viewer
+        $variants = $work->variants->map(function ($v) use ($holds) {
+            $reserved  = (int) ($holds[$v->id] ?? 0);
+            $origStock = is_null($v->stock) ? null : (int) $v->stock; // null means "unbounded" (if you use that)
+            $effStock  = is_null($origStock) ? null : max(0, $origStock - $reserved);
+
             return [
-                'id' => $v->id,
-                'sku' => $v->sku,
-                'price' => $v->price,
-                'stock' => $v->stock,
+                'id'        => $v->id,
+                'sku'       => $v->sku,
+                'price'     => $v->price,
+                'stock'     => $effStock, // 👈 per-user visible stock
                 'value_ids' => $v->attributeValues->pluck('id')->values()->all(),
             ];
         })->values();
 
-
+        // Attributes as you already had
         $attributes = [];
         foreach ($work->variants as $v) {
             foreach ($v->attributeValues as $av) {
                 $attrId = $av->attribute_id;
                 if (!isset($attributes[$attrId])) {
                     $attributes[$attrId] = [
-                        'id' => $attrId,
-                        'name' => $av->attribute->name,
+                        'id'     => $attrId,
+                        'name'   => $av->attribute->name,
                         'values' => [],
                     ];
                 }
                 $attributes[$attrId]['values'][$av->id] = [
-                    'id' => $av->id,
+                    'id'    => $av->id,
                     'value' => $av->value,
-                    'slug' => $av->slug,
+                    'slug'  => $av->slug,
                 ];
             }
         }
-
-        $attributes = array_map(function ($a) {
+        $attributes = array_values(array_map(function ($a) {
             $a['values'] = array_values($a['values']);
             return $a;
-        }, $attributes);
+        }, $attributes));
 
-        $attributes = array_values($attributes);
+        // Flag: are ALL variants (for this viewer) out-of-stock?
+        $allOut = $variants->count() > 0
+            ? $variants->every(fn($vv) => (int)($vv['stock'] ?? 0) <= 0)
+            : false;
 
         return view('frontend.art-info.art_info', [
-            'work'        => $work,
-            'category'    => $work->category,
-            'variants'    => $variants,
-            'attributes'  => $attributes,
+            'work'       => $work,
+            'category'   => $work->category,
+            'variants'   => $variants,
+            'attributes' => $attributes,
+            'allOut'     => $allOut,
         ]);
     }
+
 }

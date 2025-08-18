@@ -15,27 +15,49 @@
 
     <section class="cart-box section-gap px-4" data-aos="fade-up" data-aos-duration="2000">
         <div class="cart-all-box">
-        <div class="row">
+          <div class="row">
             <div class="col-md-9">
-            <div class="cart-box px-4 poppins mb-4">
+              {{-- HELD ITEMS --}}
+              <div class="cart-box px-4 poppins mb-4">
+                <h5 class="mb-3">Cart</h5>
                 <div class="table-responsive">
-                <table class="table align-middle text-center">
+                  <table class="table align-middle text-center">
                     <thead>
-                    <tr>
+                      <tr>
                         <th>#SL</th>
                         <th>Art Info</th>
                         <th>QTY</th>
                         <th>Price</th>
                         <th>Variant</th>
                         <th>Action</th>
-                    </tr>
+                      </tr>
                     </thead>
-                    <tbody id="cart-items-body">
-                    {{-- rows injected here --}}
-                    </tbody>
-                </table>
+                    <tbody id="cart-hold-body"><!-- rows injected --></tbody>
+                  </table>
                 </div>
-            </div>
+              </div>
+
+              {{-- STOCK-OUT ITEMS --}}
+              <div class="cart-box px-4 poppins mb-4" id="stockout-wrapper" style="display:none;">
+                <h5 class="mb-3 text-warning">Unavailable / Stock-out</h5>
+                <div class="table-responsive">
+                  <table class="table align-middle text-center">
+                    <thead>
+                      <tr>
+                        <th>#SL</th>
+                        <th>Art Info</th>
+                        <th>Status</th>
+                        <th>Variant</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cart-out-body"><!-- rows injected --></tbody>
+                  </table>
+                </div>
+                <div class="alert alert-warning mb-0">
+                  These items won’t be included at checkout. You can remove them or try again later.
+                </div>
+              </div>
             </div>
 
             <div class="col-md-3 cormorant">
@@ -77,7 +99,7 @@
                             </center>
                         </div>
                     </div>
-                    <div class="col-sm-4 p-0">
+                    <div class="col-sm-4 p-0"> 
                         <div class="bg-shape-title title-r d-none d-sm-flex"></div>
                     </div>
                 </div>
@@ -113,19 +135,17 @@
 @push('scripts')
 <script>
 $(function(){
-  var shippingCost = 10.00;
+  var shippingCost = 10.00; // fallback
   var assetBase    = "{{ asset('') }}";
 
   function formatPrice(n){ return Number(n || 0).toFixed(2); }
   function safeImg(src){
     if (!src) return "{{ asset('frontend-css/img/webimg/port-1-gallery.jpg') }}";
-    // If it's already an absolute URL (starts with http or /storage/...), return as-is
     return /^https?:\/\//.test(src) || src.startsWith('/') ? src : (assetBase + src);
   }
-
   function variantLabel(item){
-    if (item.variant_text) return item.variant_text;              // snapshot from DB
-    if (item.work_variant && item.work_variant.attribute_values) { // <- updated
+    if (item.variant_text) return item.variant_text;
+    if (item.work_variant && item.work_variant.attribute_values) {
       var groups = {};
       item.work_variant.attribute_values.forEach(function(v){
         var attr = v.attribute ? v.attribute.name : 'Option';
@@ -140,33 +160,33 @@ $(function(){
     return '—';
   }
 
+  function updateSummaryFromServer(summary){
+    var totalQty = Number(summary?.count || 0);
+    var subtotal = Number(summary?.subtotal || 0);
+    var shipping = Number(summary?.shipping ?? shippingCost);
+    var grand    = Number(summary?.grand || (subtotal + shipping));
 
-  function updateSummary(items){
-    var totalQty = 0, subtotal = 0;
-    items.forEach(function(it){
-      totalQty += Number(it.quantity || 0);
-      subtotal += Number(it.unit_price || 0) * Number(it.quantity || 0);
-    });
     $('.total_qty').text(totalQty);
     $('.subtotal').text(formatPrice(subtotal));
-    $('.grand_total').text(formatPrice(subtotal + shippingCost));
+    $('.shipping').text(formatPrice(shipping));
+    $('.grand_total').text(formatPrice(grand));
     $('#mini-cart-count').text(totalQty);
+
+    // Disable checkout if no purchasable items
+    $('#btn-proceed-checkout').prop('disabled', totalQty <= 0);
   }
 
-  function renderRows(items){
+  function renderHold(items){
     if (!items.length) {
-      $('#cart-items-body').html('<tr><td colspan="6">Your cart is empty</td></tr>');
-      updateSummary([]);
+      $('#cart-hold-body').html('<tr><td colspan="6">No purchasable items.</td></tr>');
       return;
     }
-
     var rows = '';
     items.forEach(function(item, i){
       var price     = Number(item.unit_price || 0);
       var lineTotal = price * Number(item.quantity || 0);
-      var title     = item.work_name || (item.work ? item.work.name : 'Artwork');
-      var imgSrc    = item.work_image || (item.work ? item.work.work_image : null);
-      var variant   = variantLabel(item);
+      var title     = item.work_name || 'Artwork';
+      var imgSrc    = item.work_image;
 
       rows += `
         <tr data-id="${item.id}">
@@ -184,7 +204,7 @@ $(function(){
             <input type="number" class="form-control qty-number-field" value="${item.quantity}" min="1" max="999">
           </td>
           <td class="text-end">$ ${formatPrice(lineTotal)}</td>
-          <td class="text-start">${variant}</td>
+          <td class="text-start">${variantLabel(item)}</td>
           <td>
             <button class="btn btn-outline-warning btn-delete" title="Remove">
               <i class="ri-delete-bin-line"></i>
@@ -192,23 +212,68 @@ $(function(){
           </td>
         </tr>`;
     });
+    $('#cart-hold-body').html(rows);
+  }
 
-    $('#cart-items-body').html(rows);
-    updateSummary(items);
+  function reasonBadge(item){
+    if (item.reason === 'inactive')     return '<span class="badge bg-secondary">Inactive</span>';
+    if (item.reason === 'out_of_stock') return '<span class="badge bg-danger">Out of stock</span>';
+    if (item.reason === 'insufficient') {
+      var avail = (item.available ?? 0);
+      return '<span class="badge bg-warning">Only '+avail+' available</span>';
+    }
+    return '<span class="badge bg-light text-dark">Unavailable</span>';
+  }
+
+  function renderOut(items){
+    if (!items.length) {
+      $('#stockout-wrapper').hide();
+      $('#cart-out-body').empty();
+      return;
+    }
+    var rows = '';
+    items.forEach(function(item, i){
+      var title  = item.work_name || 'Artwork';
+      var imgSrc = item.work_image;
+
+      rows += `
+        <tr data-id="${item.id}">
+          <td>${i+1}.</td>
+          <td>
+            <div class="d-flex align-items-center gap-2 text-start">
+              <img src="${safeImg(imgSrc)}" width="60" class="art-thumb" alt="${title}">
+              <div><h6 class="m-0">${title}</h6></div>
+            </div>
+          </td>
+          <td>${reasonBadge(item)}</td>
+          <td class="text-start">${variantLabel(item)}</td>
+          <td>
+            <button class="btn btn-outline-warning btn-delete" title="Remove">
+              <i class="ri-delete-bin-line"></i>
+            </button>
+          </td>
+        </tr>`;
+    });
+    $('#cart-out-body').html(rows);
+    $('#stockout-wrapper').show();
   }
 
   function loadCart(){
     $.getJSON("{{ route('cart.index') }}")
       .done(function(resp){
-        renderRows(resp.items || []);
+        // Expecting: { hold_items:[], stockout_items:[], summary:{} }
+        renderHold(resp.hold_items || []);
+        renderOut(resp.stockout_items || []);
+        updateSummaryFromServer(resp.summary || null);
       })
       .fail(function(){
-        $('#cart-items-body').html('<tr><td colspan="6">Failed to load cart.</td></tr>');
+        $('#cart-hold-body').html('<tr><td colspan="6">Failed to load cart.</td></tr>');
+        $('#stockout-wrapper').hide();
       });
   }
 
-  // Quantity change (server for everyone)
-  $('#cart-items-body').on('change', '.qty-number-field', function(){
+  // Quantity change (held only)
+  $('#cart-hold-body').on('change', '.qty-number-field', function(){
     var $row = $(this).closest('tr');
     var id   = $row.data('id');
     var qty  = parseInt($(this).val(), 10);
@@ -220,12 +285,11 @@ $(function(){
       dataType: 'json',
       data: { quantity: qty },
       headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
-    })
-    .always(loadCart);
+    }).always(loadCart);
   });
 
-  // Delete line
-  $('#cart-items-body').on('click', '.btn-delete', function(){
+  // Delete line (both tables)
+  $('#cart-hold-body, #cart-out-body').on('click', '.btn-delete', function(){
     var id = $(this).closest('tr').data('id');
     $.ajax({
       url: `{{ url('cart') }}/${id}`,
@@ -234,17 +298,18 @@ $(function(){
     }).always(loadCart);
   });
 
-  // Proceed to checkout — no client sync needed; server has guest cart via session
+  // Proceed to checkout
   $('#btn-proceed-checkout').on('click', function(e){
     e.preventDefault();
+    if ($(this).prop('disabled')) return;
     window.location.href = "{{ route('checkout.form') }}";
   });
 
-  // First load
   loadCart();
 });
 </script>
 @endpush
+
 
 
 @endsection

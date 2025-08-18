@@ -126,25 +126,114 @@ class TempCartController extends Controller
         ]);
     }
 
-
+ 
 
     public function index(Request $request)
     {
-        [$userId, $session] = [$request->user()?->id, $request->session()->getId()];
+        if ($request->wantsJson()) {
+            $user    = $request->user();
+            $session = $request->session()->getId();
 
-        $items = TempCart::with(['work','workVariant.attributeValues.attribute'])
-            ->where(function ($q) use ($userId, $session) {
-                if ($userId) $q->where('user_id', $userId);
-                else $q->whereNull('user_id')->where('session_id', $session);
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
+            $lines = TempCart::with([
+                    'work:id,name,work_image,is_active,price,quantity',
+                    'workVariant:id,work_id,sku,stock',
+                    'workVariant.attributeValues.attribute'
+                ])
+                ->where(function($q) use ($user, $session) {
+                    if ($user) $q->where('user_id', $user->id);
+                    else $q->whereNull('user_id')->where('session_id', $session);
+                })
+                ->latest()->get();
 
-        return response()->json([
-            'items'      => $items,
-            'cart_count' => $items->sum('quantity'),
-        ]);
+            $hold   = [];
+            $out    = [];
+
+            foreach ($lines as $line) {
+                $work   = $line->work;
+                $variant= $line->workVariant;
+
+                // Inactive work => out
+                if (!$work || (int)$work->is_active !== 1) {
+                    $line->reason = 'inactive';
+                    $out[] = $this->mapCartLine($line);
+                    continue;
+                }
+
+                $available = null; 
+                if ($variant) {
+                    $available = $variant->stock; 
+                } else {
+                    $available = $work->quantity; 
+                }
+
+                // Partition
+                if (!is_null($available) && (int)$available <= 0) {
+                    $line->reason = 'out_of_stock';
+                    $out[] = $this->mapCartLine($line, $available);
+                } elseif (!is_null($available) && (int)$line->quantity > (int)$available) {
+                    $line->reason = 'insufficient';
+                    $out[] = $this->mapCartLine($line, $available);
+                } else {
+                    $hold[] = $this->mapCartLine($line, $available);
+                }
+            }
+
+            // Totals only from HELD items
+            $subtotal = collect($hold)->sum(fn($it) => ($it['unit_price'] ?? 0) * ($it['quantity'] ?? 0));
+            $shipping = 10.00;
+            $grand    = $subtotal + $shipping;
+            $count    = collect($hold)->sum('quantity');
+
+            return response()->json([
+                'hold_items'     => $hold,
+                'stockout_items' => $out,
+                'summary' => [
+                    'count'    => $count,
+                    'subtotal' => $subtotal,
+                    'shipping' => $shipping,
+                    'grand'    => $grand,
+                ],
+            ]);
+        }
+
+        // HTML page render
+        $featuredWorks = Work::active()->where('is_featured',1)->latest()->take(8)->get();
+        return view('frontend.cart.index', compact('featuredWorks'));
     }
+
+    protected function mapCartLine($line, $available = null): array
+    {
+        $work   = $line->work;
+        $variant= $line->workVariant;
+
+        $variantText = $line->variant_text; 
+        if (!$variantText && $variant && $variant->relationLoaded('attributeValues')) {
+            $groups = [];
+            foreach ($variant->attributeValues as $av) {
+                $attr = $av->attribute->name ?? 'Option';
+                $groups[$attr][] = $av->value;
+            }
+            $parts = [];
+            foreach ($groups as $a => $vals) $parts[] = $a . ': ' . implode(', ', $vals);
+            $variantText = implode(' / ', $parts);
+        }
+
+        return [
+            'id'           => $line->id,
+            'work_id'      => $line->work_id,
+            'work_name'    => $work?->name,
+            'work_image'   => $work?->work_image,     
+            'work_active'  => (bool)($work?->is_active),
+            'work_type'    => $work?->work_type,
+            'work_variant' => $variant?->toArray(),
+            'variant_text' => $variantText,
+            'unit_price'   => $line->unit_price ?? ($work?->price ?? 0),
+            'quantity'     => (int)$line->quantity,
+            'available'    => is_null($available) ? null : (int)$available,
+            'reason'       => $line->reason ?? null,
+        ];
+    }
+
 
     public function count(Request $request)
     {

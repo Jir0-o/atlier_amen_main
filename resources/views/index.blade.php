@@ -25,6 +25,8 @@
             color: #191919;
             -webkit-text-stroke: 
         }
+
+        .chart-wrap { position: relative; height: 400px; width: 700px; }
     </style>
 
     <div class="content-wrapper pb-0">
@@ -44,39 +46,40 @@
                         <span class="bg-shadow">
                             <i class="mdi mdi-brush"></i>
                         </span>
-                        <span class="display-3">53</span> total art
+                        <span class="display-3">{{ $totalWorks }}</span> total art
                     </p>
                     <p>
                         <span class="bg-shadow">
                             <i class="mdi mdi-brush"></i>
                         </span>
-                        <span class="display-3">12</span> pending order
+                        <span class="display-3">{{ $pendingOrders }}</span> pending order
                     </p>
                     <p>
                         <span class="bg-shadow">
                             <i class="mdi mdi-brush"></i>
                         </span>
-                        <span class="display-3">$ 37,039</span> total income
+                        <span class="display-3">$ {{ $totalRevenue }}</span> total income
                     </p>
                 </div>
             </div>
         </div>
         <div class="row">
-            <div class="col-md-8 p-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h4 class="mb-3">Sales Chart</h4>
-                        <canvas id="salesRevenueChart"></canvas>
-                    </div>
+            <div class="card h-100">
+            <div class="card-body">
+                <h4 class="mb-3">Sales Chart</h4>
+                <div class="chart-wrap">
+                <canvas id="salesRevenueChart"></canvas>
                 </div>
             </div>
-            <div class="col-md-4 p-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h4 class="mb-3">Order Chart</h4>
-                        <canvas id="orderChart"></canvas>
-                    </div>
+            </div>
+
+            <div class="card h-100">
+            <div class="card-body">
+                <h4 class="mb-3">Order Chart</h4>
+                <div class="chart-wrap">
+                <canvas id="orderChart"></canvas>
                 </div>
+            </div>
             </div>
             <div class="col-md-12 p-3">
                 <h4>Popular Purchase</h4>
@@ -91,20 +94,28 @@
                             </tr>
                         </thead>
                         <tbody>
+                        @forelse($popularPurchases as $i => $row)
                             <tr>
-                                <td>01</td>
+                                <td>{{ str_pad($i+1, 2, '0', STR_PAD_LEFT) }}</td>
                                 <td>
-                                    <a class="text-dark font-weight-bold" style="text-decoration: underline;" href="./art_info.html">
-                                        Lorem ipsum dolor sit amer connecter, adipisicing elis.
-                                    </a>
+                                    @if($row->work)
+                                        <a class="text-dark fw-bold text-decoration-underline">
+                                            {{ $row->work->name }}
+                                        </a>
+                                    @else
+                                        <span class="text-muted">[Deleted work]</span>
+                                    @endif
                                 </td>
+                                <td>{{ (int)$row->total_purchase }}</td>
                                 <td>
-                                    13
-                                </td>
-                                <td>
-                                    August 14, 2025
+                                    @if($row->work)
+                                        {{ optional($row->work->created_at)->format('F d, Y') }}
+                                    @endif
                                 </td>
                             </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-muted">No data</td></tr>
+                        @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -122,80 +133,110 @@
                             </tr>
                         </thead>
                         <tbody>
+                        @forelse($topBuyers as $i => $row)
                             <tr>
-                                <td>01</td>
-                                <td>Atlier Amen</td>
-                                <td>25</td>
-                                <td>$ 4,958</td>
+                                <td>{{ str_pad($i+1, 2, '0', STR_PAD_LEFT) }}</td>
+                                <td>{{ optional($row->user)->name ?? 'Unknown User' }}</td>
+                                <td>{{ (int)$row->items }}</td>
+                                <td>$ {{ number_format((float)$row->spend, 2) }}</td>
                             </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-muted">No data</td></tr>
+                        @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-
+ 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
     <script>
+        // Use controller-provided data
+        const labelsFromServer  = @json($chartLabels);      // e.g., ["Sep 2024", ... "Aug 2025"]
+        const revenueFromServer = @json($chartRevenue);     // numbers
+        const ordersFromServer  = @json($chartOrderCount);  // numbers
+
+        // Fallbacks (optional)
+        const demoLabels = labelsFromServer?.length ? labelsFromServer : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+        const demoData   = revenueFromServer?.length ? revenueFromServer : [1200,1900,3000,2500,2100,3500,4200,1500];
+        const orderLabels= labelsFromServer?.length ? labelsFromServer : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+        const orderData  = ordersFromServer?.length ? ordersFromServer : [10,10,30,25,21,35,42,15];
+
+        // Global defaults (kept from your code)
         Chart.defaults.color = '#FFFFFF';
 
-        const demoLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
-        const demoData = [1200, 1900, 3000, 2500, 2100, 3500, 4200, 1500];
+        const salesCtx = document.getElementById('salesRevenueChart');
+        const orderCtx = document.getElementById('orderChart');
 
-        const orderLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
-        const orderData = [10, 10, 30, 25, 21, 35, 42, 15];
-
-        const ctx = document.getElementById('salesRevenueChart').getContext('2d');
-        const orderChart = document.getElementById('orderChart').getContext('2d');
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: demoLabels,
-                datasets: [{
-                    label: 'Revenue ($)',
-                    data: demoData,
-                    backgroundColor: '#fff',
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => '$' + ctx.parsed.y.toLocaleString()
-                        }
-                    }
+        if (salesCtx) {
+            new Chart(salesCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: demoLabels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: demoData,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        fill: false
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => '$' + value.toLocaleString()
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => '৳ ' + Number(ctx.parsed.y ?? 0).toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => '৳ ' + Number(value ?? 0).toLocaleString()
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
-        new Chart(orderChart, {
-            type: 'pie',
-            data: {
-                labels: orderLabels,
-                datasets: [{
-                    data: orderData,
-                }]
-            },
-            options: {
-                responsive: true
-            }
-        })
+        if (orderCtx) {
+            // Kept your "pie" type; it will show order share by month
+            new Chart(orderCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: orderLabels,
+                    datasets: [{
+                        data: orderData
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const label = ctx.label || '';
+                                    const val = Number(ctx.parsed ?? 0);
+                                    return `${label}: ${val.toLocaleString()} orders`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
+
 
     <script>
         function updateClock() {
