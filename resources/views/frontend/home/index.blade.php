@@ -20,7 +20,7 @@
                 <div class="playfair page-title onload">
                     <div class="d-flex gap-2 justify-content-center text-nowrap">
                         <h1>
-                            GET <span class="white px-2">INSPIRED</span>
+                            <span class="white px-2">GET INSPIRED</span>
                         </h1>
                     </div>
                 </div>

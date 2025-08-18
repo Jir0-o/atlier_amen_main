@@ -23,6 +23,7 @@
                     rgb(255 255 255 / 35%));
             backdrop-filter: blur(1px);
             color: #191919;
+            -webkit-text-stroke: 
         }
     </style>
 

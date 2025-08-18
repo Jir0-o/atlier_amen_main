@@ -7,11 +7,11 @@
       <a class="navbar-brand brand-logo-mini" href="index.html"><img src="{{ asset('plus-admin/images/logo-mini.svg') }}" alt="" /></a>
     </div>
     <ul class="navbar-nav">
-      <li class="nav-item dropdown">
-        <a class="nav-link" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
+      <li class="nav-item">
+        <a class="nav-link" {{-- id="messageDropdown" data-toggle="dropdown" aria-expanded="false" --}} href="{{ route('contact-messages.index') }}">
           <i class="mdi mdi-email-outline"></i>
         </a>
-        <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list" aria-labelledby="messageDropdown">
+        {{-- <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list" aria-labelledby="messageDropdown">
           <h6 class="p-3 mb-0 font-weight-semibold">Messages</h6>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item preview-item">
@@ -45,7 +45,7 @@
           </a>
           <div class="dropdown-divider"></div>
           <h6 class="p-3 mb-0 text-center text-primary font-13">4 new messages</h6>
-        </div>
+        </div> --}}
       </li>
       <li class="nav-item dropdown ml-3">
         <a class="nav-link" id="notificationDropdown" href="#" data-toggle="dropdown">
@@ -89,19 +89,19 @@
               <p class="text-gray ellipsis mb-0"> 11:09 PM </p>
             </div>
           </a>
-          <div class="dropdown-divider"></div>
-          <h6 class="p-3 font-13 mb-0 text-primary text-center">View all notifications</h6>
+          {{-- <div class="dropdown-divider"></div>
+          <h6 class="p-3 font-13 mb-0 text-primary text-center">View all notifications</h6> --}}
         </div>
       </li>
     </ul>
     <ul class="navbar-nav navbar-nav-right">
-      <li class="nav-item nav-logout d-none d-md-block mr-3">
+      {{-- <li class="nav-item nav-logout d-none d-md-block mr-3">
         <a class="nav-link" href="#">Status</a>
       </li>
       <li class="nav-item nav-logout d-none d-md-block">
         <button class="btn btn-sm btn-danger">Trailing</button>
-      </li>
-      <li class="nav-item nav-profile dropdown d-none d-md-block">
+      </li> --}}
+      {{-- <li class="nav-item nav-profile dropdown d-none d-md-block">
         <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
           <div class="nav-profile-text">English </div>
         </a>
@@ -118,9 +118,9 @@
           <a class="dropdown-item" href="#">
             <i class="flag-icon flag-icon-ru mr-3"></i>Russian </a>
         </div>
-      </li>
+      </li> --}}
       <li class="nav-item nav-logout d-none d-lg-block">
-        <a class="nav-link" href="index.html">
+        <a class="nav-link" href="{{ route('index') }}">
           <i class="mdi mdi-home-circle"></i>
         </a>
       </li>
