@@ -24,6 +24,8 @@ return new class extends Migration {
             $table->float('price')->default(0)->nullable();
             $table->integer('quantity')->default(0)->nullable();
             $table->string('art_video')->nullable();
+            $table->string('work_type')->default('art');
+            $table->string('book_pdf')->nullable();   
             $table->longText('details')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_featured')->default(false);

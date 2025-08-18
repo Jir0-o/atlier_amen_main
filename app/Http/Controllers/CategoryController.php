@@ -125,6 +125,7 @@ class CategoryController extends Controller
     public function category(Category $category)
     {
         $items = $category->works()
+            ->active()  
             ->latest()
             ->get();
 

@@ -13,6 +13,8 @@ class Work extends Model
         'tags',
         'details',
         'art_video',
+        'work_type',
+        'book_pdf',
         'work_image',
         'work_image_low',
         'image_left',
@@ -34,6 +36,11 @@ class Work extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
     }
 
     public function gallery()

@@ -6,7 +6,7 @@
     .modal .select2-container {
         z-index: 1061;
     }
-        .modal .select2-container .select2-dropdown {
+    .modal .select2-container .select2-dropdown {
         z-index: 1061;
     }
 </style>
@@ -29,6 +29,7 @@
                                         <th>#</th>
                                         <th>Category</th>
                                         <th>Name</th>
+                                        <th>Work Type</th>
                                         <th>Date</th>
                                         <th>Work Image</th>
                                         <th>Left</th>
@@ -78,6 +79,16 @@
                                     <span class="text-danger error-text category_id_error"></span>
                                 </div>
 
+                                {{-- Work Type --}}
+                                <div class="col-md-6">
+                                    <label class="form-label" for="work_type">Work Type</label>
+                                    <select name="work_type" id="work_type" class="form-control">
+                                        <option value="art" selected>Art Work</option>
+                                        <option value="book">Books</option>
+                                    </select>
+                                    <span class="text-danger error-text work_type_error"></span>
+                                </div>
+
                                 {{-- Name --}}
                                 <div class="col-md-6">
                                     <label class="form-label" for="work_name">Name</label>
@@ -110,11 +121,10 @@
                                     <span class="text-danger error-text is_active_error"></span>
                                 </div>
 
-                                {{-- Work Image --}}
-                                <div class="col-md-6">
+                                {{-- Work Image (Art only) --}}
+                                <div class="col-md-6 art-only">
                                     <label class="form-label" for="work_image">Work Image</label>
-                                    <input type="file" name="work_image" id="work_image" class="form-control"
-                                        accept="image/*">
+                                    <input type="file" name="work_image" id="work_image" class="form-control" accept="image/*">
                                     <span class="text-danger error-text work_image_error"></span>
                                     <div class="mt-2">
                                         <img id="preview_work_image" src="" alt=""
@@ -122,11 +132,10 @@
                                     </div>
                                 </div>
 
-                                {{-- Left --}}
-                                <div class="col-md-6">
+                                {{-- Left (Art only) --}}
+                                <div class="col-md-6 art-only">
                                     <label class="form-label" for="work_image_left">Left Image</label>
-                                    <input type="file" name="image_left" id="work_image_left" class="form-control"
-                                        accept="image/*">
+                                    <input type="file" name="image_left" id="work_image_left" class="form-control" accept="image/*">
                                     <span class="text-danger error-text image_left_error"></span>
                                     <div class="mt-2">
                                         <img id="preview_work_image_left" src="" alt=""
@@ -134,11 +143,10 @@
                                     </div>
                                 </div>
 
-                                {{-- Right --}}
-                                <div class="col-md-6">
+                                {{-- Right (Art only) --}}
+                                <div class="col-md-6 art-only">
                                     <label class="form-label" for="work_image_right">Right Image</label>
-                                    <input type="file" name="image_right" id="work_image_right" class="form-control"
-                                        accept="image/*">
+                                    <input type="file" name="image_right" id="work_image_right" class="form-control" accept="image/*">
                                     <span class="text-danger error-text image_right_error"></span>
                                     <div class="mt-2">
                                         <img id="preview_work_image_right" src="" alt=""
@@ -146,20 +154,31 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
+                                {{-- Art Video (Art only) --}}
+                                <div class="col-md-6 art-only">
                                     <label class="form-label" for="art_video">Art Video</label>
                                     <input type="file" name="art_video" id="art_video" class="form-control"
                                         accept="video/mp4,video/ogg,video/webm">
                                     <span class="text-danger error-text art_video_error"></span>
                                     <div class="mt-2">
-                                    <video id="preview_art_video"
-                                        style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;"
-                                        muted
-                                        playsinline
-                                        autoplay
-                                        controls>
-                                    </video>
+                                        <video id="preview_art_video"
+                                            style="max-width:120px;display:none;border:1px solid #ddd;padding:2px;"
+                                            muted playsinline autoplay controls></video>
                                     </div>
+                                </div>
+
+                                {{-- Book PDF (Book only) --}}
+                                <div class="col-md-6 book-only" style="display:none;">
+                                <label class="form-label" for="book_pdf">PDF Book</label>
+                                <input type="file" name="book_pdf" id="book_pdf" class="form-control" accept="application/pdf">
+                                <span class="text-danger error-text book_pdf_error"></span>
+
+                                {{-- Current PDF link (edit mode) --}}
+                                <div class="mt-2" id="book_pdf_info" style="display:none;"></div>
+
+                                {{-- Inline PDF preview for edit --}}
+                                <iframe id="book_pdf_preview"
+                                        style="width:100%;height:360px;border:1px solid #444;margin-top:8px;display:none;"></iframe>
                                 </div>
 
                                 {{-- Fallback Base Price --}}
@@ -182,7 +201,7 @@
 
                                 <div class="row g-3 mb-3" id="variant-attributes-wrapper">
                                     @php
-                                        $allAttributes = \App\Models\Attribute::with('values')->get();
+$allAttributes = \App\Models\Attribute::with('values')->get();
                                     @endphp
 
                                     @foreach ($allAttributes as $attribute)
@@ -267,20 +286,26 @@
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-md-6 text-center">
-                                <img id="view_work_image" src="" class="img-fluid mb-3" alt=""
-                                    style="max-height:250px;object-fit:contain;">
-                                <div class="d-flex justify-content-center gap-3">
-                                    <img id="view_work_left" src="" class="img-thumbnail"
-                                        style="max-width:100px;">
-                                    <img id="view_work_right" src="" class="img-thumbnail"
-                                        style="max-width:100px;">
+                                {{-- ART ONLY (view) --}}
+                                <div class="art-only-view">
+                                    <img id="view_work_image" src="" class="img-fluid mb-3" alt=""
+                                        style="max-height:250px;object-fit:contain;">
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <img id="view_work_left" src="" class="img-thumbnail" style="max-width:100px;">
+                                        <img id="view_work_right" src="" class="img-thumbnail" style="max-width:100px;">
+                                    </div>
+                                    <div class="mt-3">
+                                        <video id="view_work_video"
+                                            style="max-width:100%;max-height:260px;border-radius:6px;display:none;"
+                                            controls playsinline></video>
+                                    </div>
                                 </div>
-                                <div class="mt-3">
-                                <video id="view_work_video"
-                                        style="max-width:100%;max-height:260px;border-radius:6px;display:none;"
-                                        controls
-                                        playsinline>
-                                </video>
+
+                                {{-- BOOK ONLY (view) --}}
+                                <div class="book-only-view" style="display:none;">
+                                    <div id="view_book_pdf_info" class="mb-2"></div>
+                                    <iframe id="view_work_pdf_frame"
+                                        style="width:100%;height:420px;border:1px solid #444;display:none;"></iframe>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -423,72 +448,64 @@
                 }
             }
 
+        let workTable = $('#workTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: "{{ route('works.index') }}",
+            columns: [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'category', name: 'category' },
+                { data: 'name', name: 'name' },
+                { data: 'work_type', name: 'work_type', orderable: true, searchable: true },
+
+                { data: 'work_date', name: 'work_date' },
+                { data: 'work_image', name: 'work_image', orderable: false, searchable: false },
+                { data: 'image_left', name: 'image_left', orderable: false, searchable: false },
+                { data: 'image_right', name: 'image_right', orderable: false, searchable: false },
+                { data: 'tags', name: 'tags' },
+                { data: 'featured', name: 'featured', orderable: false, searchable: false },
+                { data: 'is_active', name: 'is_active', orderable: false, searchable: false },
+                { data: 'action', name: 'action', orderable: false, searchable: false },
+            ]
+        });
+
+        function toggleTypeUI(type) {
+        if (type === 'book') {
+            // Hide art-only; show book-only
+            $('.art-only').hide();
+            $('.book-only').show();
+
+            // Clear art inputs + previews
+            $('#work_image, #work_image_left, #work_image_right, #art_video').val('');
+            $('#preview_work_image, #preview_work_image_left, #preview_work_image_right').hide().attr('src', '');
+
+            const v = $('#preview_art_video').get(0);
+            if (v) { v.pause?.(); v.removeAttribute('src'); }
+            $('#preview_art_video').hide();
+
+            // PDF preview stays controlled in the edit handler below
+        } else {
+            // Show art-only; hide book-only
+            $('.art-only').show();
+            $('.book-only').hide();
+
+            // Clear PDF input + preview
+            $('#book_pdf').val('');
+            $('#book_pdf_info').hide().empty();
+            $('#book_pdf_preview').hide().attr('src','');
+        }
+        }
 
 
-            // DataTable
-            let workTable = $('#workTable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: "{{ route('works.index') }}",
-                columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'category',
-                        name: 'category'
-                    },
-                    {
-                        data: 'name',
-                        name: 'name'
-                    },
-                    {
-                        data: 'work_date',
-                        name: 'work_date'
-                    },
-                    {
-                        data: 'work_image',
-                        name: 'work_image',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'image_left',
-                        name: 'image_left',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'image_right',
-                        name: 'image_right',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'tags',
-                        name: 'tags'
-                    },
-                    {
-                        data: 'featured',
-                        name: 'featured',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'is_active',
-                        name: 'is_active',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
-                ]
+            // Change handler
+            $(document).on('change', '#work_type', function() {
+                toggleTypeUI(this.value);
+            });
+
+            // When opening modal for "Add"
+            $(document).on('click', '.openWorkCreateModalBtn', function(){
+                // default to "art" unless you prefer last used
+                $('#work_type').val('art').trigger('change');
             });
 
             // Preview click (lightbox)
@@ -506,18 +523,51 @@
             });
             // --- SELECT2 INIT ---
             function initAttributeSelects() {
-                $('.select2-attribute').each(function() {
+                $('.select2-attribute').each(function () {
                     if (!$(this).data('select2')) {
-                        $(this).select2({
-                            placeholder: 'Select ' + $(this).data('attribute-name'),
-                            allowClear: true,
-                            width: '100%',
-                            theme: 'bootstrap-5', 
-                            dropdownParent: $('#workModal')
-                        });
+                    $(this).select2({
+                        placeholder: 'Select ' + $(this).data('attribute-name'),
+                        allowClear: true,
+                        width: '100%',
+                        theme: 'bootstrap-5',
+                        dropdownParent: $('#workModal') // good
+                    });
                     }
                 });
             }
+
+            // Force Select2 to open downward inside the modal by scrolling it into view
+            function forceSelect2DropDown($select) {
+                const $modalBody = $('#workModal .modal-body');
+                const $container = $select.next('.select2-container');
+
+                // position() is relative to the first positioned ancestor (modal-body)
+                const offsetTop = $container.position().top;
+                const pad = 12;
+
+                // Prevent re-entrancy loops
+                if ($select.data('s2fixing')) return;
+                $select.data('s2fixing', true);
+
+                // Close → scroll → reopen so Select2 recalculates placement
+                $select.select2('close');
+                $modalBody.stop(true).animate(
+                    { scrollTop: $modalBody.scrollTop() + offsetTop - pad },
+                    120,
+                    function () {
+                        $select.select2('open');
+                        // clear the guard shortly after reopening
+                        setTimeout(() => $select.removeData('s2fixing'), 150);
+                    }
+                );
+            }
+
+            $(document).on('select2:open', '.select2-attribute', function () {
+                // wait a tick so Select2 renders, then force downward
+                const $sel = $(this);
+                setTimeout(() => forceSelect2DropDown($sel), 0);
+            });
+
             $('#art_video').on('change', function () {
                 const file = this.files && this.files[0];
                 if (!file) return;
@@ -761,7 +811,7 @@
                 });
             }
 
-            // Edit Work
+            //edit work
             $('body').on('click', '.editWorkBtn', function() {
                 const id = $(this).data('id');
                 resetWorkForm();
@@ -775,18 +825,37 @@
                     $('#work_date').val(data.work_date);
                     $('#work_tags').val(data.tags);
                     $('#work_details').val(data.details);
-                    // is_active is a select
                     $('#work_is_active').val(data.is_active ? "1" : "0");
 
+                    var type = (data.work_type === 'book') ? 'book' : 'art';
+                    $('#work_type').val(type);
+                    toggleTypeUI(type);
+
+                    if (type === 'book') {
+                    if (data.book_pdf_url) {
+                        $('#book_pdf_info')
+                        .show()
+                        .html('<small class="text-muted">Current PDF: <a target="_blank" href="'+data.book_pdf_url+'">Open in new tab</a></small>');
+
+                        // Show inline preview
+                        $('#book_pdf_preview')
+                        .attr('src', data.book_pdf_url)
+                        .show();
+                    } else {
+                        $('#book_pdf_info').hide().empty();
+                        $('#book_pdf_preview').hide().attr('src','');
+                    }
+                    }
+
+                    // Previews (only for art)
+                    if (type === 'art') {
                     if (data.art_video_url) {
                         showVideo(data.art_video_url);
-                        } else {
+                    } else {
                         $('#preview_art_video').hide().get(0)?.pause();
                         $('#preview_art_video').removeAttr('src');
                     }
 
-
-                    // main previews
                     if (data.work_image_url) {
                         $('#preview_work_image').attr('src', data.work_image_url).show();
                     }
@@ -796,30 +865,26 @@
                     if (data.image_right_url) {
                         $('#preview_work_image_right').attr('src', data.image_right_url).show();
                     }
+                    }
 
                     // existing gallery thumbs
                     if (data.gallery && data.gallery.length) {
-                    $('#existing_gallery_wrapper').show();
-                    const $list = $('#existing_gallery_list').empty();
-                    data.gallery.forEach(function(g) {
-                    $list.append(`
-                        <div class="d-inline-flex align-items-center me-2 mb-2" data-gid="${g.id}">
-                            <img src="${g.image_url}" class="img-thumbnail" 
-                                style="width:80px;height:80px;object-fit:cover;">
-                            <button type="button"
-                                    class="btn btn-sm btn-danger ms-1 deleteGalleryImgBtn"
-                                    data-id="${g.id}" title="Delete">×</button>
-                        </div>
-                    `);
-                    });
+                        $('#existing_gallery_wrapper').show();
+                        const $list = $('#existing_gallery_list').empty();
+                        data.gallery.forEach(function(g) {
+                            $list.append(`
+                                <div class="d-inline-flex align-items-center me-2 mb-2" data-gid="${g.id}">
+                                    <img src="${g.image_url}" class="img-thumbnail" style="width:80px;height:80px;object-fit:cover;">
+                                    <button type="button" class="btn btn-sm btn-danger ms-1 deleteGalleryImgBtn" data-id="${g.id}" title="Delete">×</button>
+                                </div>
+                            `);
+                        });
                     } else {
-                    $('#existing_gallery_wrapper').hide();
+                        $('#existing_gallery_wrapper').hide();
                     }
 
                     initAttributeSelects();
-                        setTimeout(() => {
-                        populateVariantsOnEdit(data);
-                    }, 0);
+                    setTimeout(() => { populateVariantsOnEdit(data); }, 0);
 
                     $('#workModal').modal('show');
                 });
@@ -830,18 +895,9 @@
             $('body').on('click', '.viewWorkBtn', function() {
                 const id = $(this).data('id');
                 clearViewWorkModal();
+
                 $.get("{{ url('works') }}/" + id, function(data) {
                     $('#viewWorkModalTitle').text(data.name);
-                    $('#view_work_image').attr('src', data.work_image);
-                    $('#view_work_left').attr('src', data.image_left);
-                    $('#view_work_right').attr('src', data.image_right);
-                    if (data.art_video) {
-                        setAndPlayVideo($('#view_work_video'), data.art_video);
-                        } else {
-                        const v = $('#view_work_video').get(0);
-                        if (v) { v.pause?.(); v.removeAttribute('src'); }
-                        $('#view_work_video').hide();
-                    }
                     $('#view_work_category').text(data.category || '—');
                     $('#view_work_name').text(data.name);
                     $('#view_work_date').text(data.work_date || '—');
@@ -853,56 +909,90 @@
                     $('#view_work_updated').text(data.updated_at || '—');
                     $('#view_work_details').html(data.details || '<em>No details.</em>');
 
-                    // Variants
+                    const type = (data.work_type === 'book') ? 'book' : 'art';
+
+                    if (type === 'book') {
+                    $('.art-only-view').hide();
+                    $('.book-only-view').show();
+
+                    if (data.book_pdf_url) {
+                        $('#view_book_pdf_info').html(
+                        '<a target="_blank" href="'+data.book_pdf_url+'" class="btn btn-sm btn-outline-light">Open PDF in new tab</a>'
+                        );
+                        $('#view_work_pdf_frame').attr('src', data.book_pdf_url).show();
+                    } else {
+                        $('#view_book_pdf_info').html('<em>No PDF attached.</em>');
+                        $('#view_work_pdf_frame').hide().attr('src','');
+                    }
+                    } else {
+                    $('.book-only-view').hide();
+                    $('.art-only-view').show();
+
+                    // Be flexible about keys: *_url or bare
+                    const mainImg  = data.work_image_url  || data.work_image;
+                    const leftImg  = data.image_left_url  || data.image_left;
+                    const rightImg = data.image_right_url || data.image_right;
+                    const videoSrc = data.art_video_url   || data.art_video;
+
+                    if (mainImg) { $('#view_work_image').attr('src', mainImg).show(); }
+                    else { $('#view_work_image').hide().attr('src',''); }
+
+                    if (leftImg) { $('#view_work_left').attr('src', leftImg).show(); }
+                    else { $('#view_work_left').hide().attr('src',''); }
+
+                    if (rightImg) { $('#view_work_right').attr('src', rightImg).show(); }
+                    else { $('#view_work_right').hide().attr('src',''); }
+
+                    if (videoSrc) {
+                        setAndPlayVideo($('#view_work_video'), videoSrc);
+                    } else {
+                        const v = $('#view_work_video').get(0);
+                        if (v) { v.pause?.(); v.removeAttribute('src'); }
+                        $('#view_work_video').hide();
+                    }
+                    }
+
+                    // Variants table (unchanged)
                     const $variantContainer = $('#view_work_variants').empty();
                     let totalStock = 0;
                     if (data.variants && data.variants.length) {
                         let rows = '';
                         data.variants.forEach(v => {
                             totalStock += parseInt(v.stock || 0, 10);
-                            // combination_text already human readable
                             rows += `
-                        <tr>
-                            <td>${escapeHtml(v.combination_text)}</td>
-                            <td>${escapeHtml(v.sku)}</td>
-                            <td>${v.price !== null ? parseFloat(v.price).toFixed(2) : '—'}</td>
-                            <td>${v.stock !== null ? v.stock : '—'}</td>
-                        </tr>
-                    `;
+                                <tr>
+                                    <td>${escapeHtml(v.combination_text)}</td>
+                                    <td>${escapeHtml(v.sku)}</td>
+                                    <td>${v.price !== null ? parseFloat(v.price).toFixed(2) : '—'}</td>
+                                    <td>${v.stock !== null ? v.stock : '—'}</td>
+                                </tr>
+                            `;
                         });
 
-                        const table = `
-                    <table class="table table-sm table-bordered text-light">
-                        <thead>
-                            <tr>
-                                <th>Combination</th>
-                                <th>SKU</th>
-                                <th>Price</th>
-                                <th>Stock</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
-                    </table>
-                `;
-                        $variantContainer.html(table);
-                        $('#view_work_total_stock').text(
-                            `Total stock across variants: ${totalStock}`);
+                        $variantContainer.html(`
+                            <table class="table table-sm table-bordered text-light">
+                                <thead>
+                                    <tr>
+                                        <th>Combination</th>
+                                        <th>SKU</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        `);
+                        $('#view_work_total_stock').text(`Total stock across variants: ${totalStock}`);
                     } else {
-                        // fallback to base price/quantity if no variants
-                        $variantContainer.html(
-                            '<div><em>No variants. Showing base price/quantity if available.</em></div>'
-                            );
+                        $variantContainer.html('<div><em>No variants. Showing base price/quantity if available.</em></div>');
+                        $('#view_work_total_stock').text('');
                     }
 
-                    // Gallery
+                    // Gallery (unchanged)
                     const $vwGal = $('#view_work_gallery').empty();
                     if (data.gallery && data.gallery.length) {
                         data.gallery.forEach(g => {
-                            $vwGal.append(
-                                `<img src="${g.url}" class="img-thumbnail preview-img" data-src="${g.url}" style="max-width:100px;cursor:pointer;">`
-                                );
+                            $vwGal.append(`<img src="${g.url}" class="img-thumbnail preview-img" data-src="${g.url}" style="max-width:100px;cursor:pointer;">`);
                         });
                     } else {
                         $vwGal.html('<em>No gallery images.</em>');
