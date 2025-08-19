@@ -29,8 +29,17 @@
                     @php 
                       $hasVideo    = !empty($work->art_video);
                       $videoUrl    = $hasVideo ? asset($work->art_video) : '';
+                      $bookPdf      = !empty($work->book_pdf);
+                      $bookPdfUrl  = $bookPdf ? asset($work->book_pdf) : '';
                     @endphp
 
+
+                    <iframe
+                        src="{{ $bookPdfUrl }}"
+                        class="indi-video-preview indi-img-preview"
+                        id="book_previewer"
+                        style="height:500px; width:100%;border-radius:12px; {{ $bookPdf ? '' : 'display:none;' }}">
+                    </iframe>
                     {{-- Main video (shown first if exists) --}}
                     <video
                         src="{{ $videoUrl }}"
@@ -41,6 +50,7 @@
                         style="width:100%;border-radius:12px; {{ $hasVideo ? '' : 'display:none;' }}">
                     </video>
 
+                    @if($work->work_type === 'art')
                     {{-- Main image (always present; hidden if video is active initially) --}}
                     <img
                         src="{{ $work->work_image_url ?? $work->work_image_low_url ?? '' }}"
@@ -66,6 +76,7 @@
                             loading="lazy"
                             style="{{ $hasVideo ? 'display:none;' : '' }}">
                     @endif
+                    @endif
                 </div>
 
                 {{-- Gallery Thumbs --}}
@@ -76,6 +87,19 @@
                     @php
                       $videoPoster = asset('frontend-css/img/webimg/video-placeholder.jpg');
                     @endphp
+                    @if (!empty($work->book_pdf))
+                      <div class="col-3 p-3">
+                        <div class="active">
+                          <div class="video-thumb-wrapper" style="position:relative;">
+                            <iframe
+                                src="{{ asset($work->book_pdf) }}#toolbar=1&navpanes=1&scrollbar=1"
+                                type="application/pdf"
+                                frameborder="0"
+                                style="width:100%; height:300px; border-radius:8px;"></iframe>
+                          </div>
+                        </div>
+                      </div>
+                    @endif
                     @if(!empty($work->art_video))
                       <div class="col-3 p-3">
                         <div class="active">
@@ -94,6 +118,7 @@
                       </div>
                     @endif
 
+                    @if ($work->work_type === 'art')
                     {{-- 2nd thumb: main IMAGE --}}
                     @if(!empty($work->work_image_url ?? $work->work_image_low_url))
                       <div class="col-3 p-3">
@@ -108,6 +133,7 @@
                             style="width:100%;border-radius:8px;cursor:pointer">
                         </div>
                       </div>
+                    @endif
                     @endif
 
                     {{-- Remaining gallery images/videos --}}

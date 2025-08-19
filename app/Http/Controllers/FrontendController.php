@@ -21,7 +21,7 @@ class FrontendController extends Controller
     {
         $categories = Category::where('is_active', true)->where('is_vip', false)->latest()->get();
         //recently added 2 categories
-        $recentWorks = Work::where('is_active', true)->latest()->take(2)->get();
+        $recentWorks = Work::where('is_active', true)->where('work_type',  'art')->latest()->take(2)->get();
         $featuredWorks = Work::where('is_featured', 1)
         ->latest()
         ->take(8) 

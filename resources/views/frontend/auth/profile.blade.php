@@ -123,7 +123,7 @@
                                                                 <div class="position-relative d-inline-block">
                                                                     <img width="50" class="cart-product-thumb"
                                                                         src="{{ $thumb ? asset($thumb) : asset('images/no-image.png') }}"
-                                                                        alt="Order {{ $o->id }} First Item" loading="lazy">
+                                                                        alt="Orded PDF" loading="lazy">
                                                                     @if($o->items->count() > 1)
                                                                         <span class="badge bg-secondary position-absolute top-0 start-100 translate-middle">
                                                                             +{{ $o->items->count() - 1 }}
@@ -203,13 +203,30 @@
                                                         <tr>
                                                             <td class="bg-transparent text-light">{{ $i+1 }}.</td>
                                                             <td class="bg-transparent text-light">
-                                                                <div class="d-flex align-items-center gap-2">
-                                                                    @php $img = $w->work->work_image_low ?? $w->work->work_image ?? $w->work_image_low; @endphp
-                                                                    <img class="art-thumb" src="{{ $img ? asset($img) : asset('images/no-image.png') }}" alt="">
-                                                                    <div>
-                                                                        <h6 class="mb-2">{{ $w->work->name ?? $w->work_name ?? 'Artwork' }}</h6>
+                                                                @if ($w->work->work_type === 'art')
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        @php 
+                                                                            $img = $w->work->work_image_low 
+                                                                                    ?? $w->work->work_image 
+                                                                                    ?? $w->work_image_low; 
+                                                                        @endphp
+                                                                        <img class="art-thumb" 
+                                                                            src="{{ $img ? asset($img) : asset('images/no-image.png') }}" 
+                                                                            alt="Artwork">
+                                                                        <div>
+                                                                            <h6 class="mb-2">{{ $w->work->name ?? $w->work_name ?? 'Artwork' }}</h6>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
+                                                                @else
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <img class="art-thumb"
+                                                                            src="{{ asset('images/pdf-placeholder.png') }}" 
+                                                                            alt="PDF">
+                                                                        <div>
+                                                                            <h6 class="mb-2">{{ $w->work->name ?? $w->work_name ?? 'Book' }}</h6>
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
                                                             </td>
                                                             <td class="bg-transparent text-light">
                                                                 @if($w->work->variants->isNotEmpty())
@@ -262,6 +279,7 @@
                                                         <tr>
                                                             <td class="bg-transparent text-light">{{ $i+1 }}.</td>
                                                             <td class="bg-transparent text-light">
+                                                                @if ($c->work->work_type === 'art')
                                                                 <div class="d-flex align-items-center gap-2">
                                                                     @php $img = $c->work->work_image_low ?? $c->work->work_image ?? $c->work_image_low; @endphp
                                                                     <img class="art-thumb" src="{{ $img ? asset($img) : asset('images/no-image.png') }}" alt="">
@@ -274,6 +292,16 @@
                                                                         @endif
                                                                     </div>
                                                                 </div>
+                                                                @else
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <img class="art-thumb"
+                                                                        src="{{ asset('images/pdf-placeholder.png') }}" 
+                                                                        alt="PDF">
+                                                                    <div>
+                                                                        <h6 class="mb-2">{{ $c->work->name ?? $c->work_name ?? 'Book' }}</h6>
+                                                                    </div>
+                                                                </div>
+                                                                @endif
                                                             </td>
                                                             <td class="bg-transparent text-light">{{ (int) $c->quantity }}</td>
                                                             <td class="text-end bg-transparent text-light">
