@@ -66,7 +66,6 @@ class FrontendController extends Controller
     {
         $featuredWorks = Work::where('is_featured', 1)
         ->latest()
-        ->take(8)
         ->get();
         return view('frontend.purchase.cart', compact('featuredWorks'));
     }

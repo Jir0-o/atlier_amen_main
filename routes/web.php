@@ -8,6 +8,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FooterSettingController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\OrderController;
@@ -94,18 +95,18 @@ Route::prefix('frontend')->group(function () {
 
 });
 
-Route::get('/dashboard', function () {
-    return view('index');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
-    
+
     //resource routes
     Route::resource('categories', CategoryController::class);
     Route::resource('adminAbout', AboutController::class);
     Route::resource('adminContract', ContractController::class);
     Route::resource('works', WorkController::class);
     Route::resource('users', UserController::class);
+
+
+    //dashbaord routes
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     //user routs
     Route::get('/admin/users/data', [UserController::class, 'data'])->name('admin.users.data');

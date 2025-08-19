@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AttributeValue;
+use App\Models\TempCart;
 use App\Models\Work;
 use App\Models\WorkGallery;
 use App\Models\Category;
@@ -27,17 +28,45 @@ class WorkController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('category', fn($row) => $row->category?->name ?? '—')
+
+                ->addColumn('work_type', function ($row) {
+                    return $row->work_type === 'book'
+                        ? '<span class="badge bg-info">Book</span>'
+                        : '<span class="badge bg-primary">Art Work</span>';
+                })
+
                 ->addColumn('work_image', function ($row) {
-                    return '<img src="'.$row->work_image_url.'" class="img-thumbnail preview-img" data-src="'.$row->work_image_url.'" style="max-width:60px;">';
+                    if ($row->work_type === 'book') {
+                        return '<span class="text-muted">—</span>';
+                    }
+                    $url = $row->work_image_url ?? null;
+                    return $url
+                        ? '<img src="'.$url.'" class="img-thumbnail preview-img" data-src="'.$url.'" style="max-width:60px;">'
+                        : '<span class="text-muted">—</span>';
                 })
                 ->addColumn('image_left', function ($row) {
-                    return '<img src="'.$row->image_left_url.'" class="img-thumbnail preview-img" data-src="'.$row->image_left_url.'" style="max-width:60px;">';
+                    if ($row->work_type === 'book') {
+                        return '<span class="text-muted">—</span>';
+                    }
+                    $url = $row->image_left_url ?? null;
+                    return $url
+                        ? '<img src="'.$url.'" class="img-thumbnail preview-img" data-src="'.$url.'" style="max-width:60px;">'
+                        : '<span class="text-muted">—</span>';
                 })
                 ->addColumn('image_right', function ($row) {
-                    return '<img src="'.$row->image_right_url.'" class="img-thumbnail preview-img" data-src="'.$row->image_right_url.'" style="max-width:60px;">';
+                    if ($row->work_type === 'book') {
+                        return '<span class="text-muted">—</span>';
+                    }
+                    $url = $row->image_right_url ?? null;
+                    return $url
+                        ? '<img src="'.$url.'" class="img-thumbnail preview-img" data-src="'.$url.'" style="max-width:60px;">'
+                        : '<span class="text-muted">—</span>';
                 })
+
                 ->addColumn('featured', function ($row) {
-                    return $row->is_featured ? '<span class="badge bg-warning">Featured</span>' : '<span class="badge bg-secondary">Normal</span>';
+                    return $row->is_featured
+                        ? '<span class="badge bg-warning">Featured</span>'
+                        : '<span class="badge bg-secondary">Normal</span>';
                 })
                 ->editColumn('work_date', fn($row) => $row->work_date?->format('Y-m-d') ?? '—')
                 ->editColumn('tags', fn($row) => e($row->tags ?? '—'))
@@ -47,31 +76,23 @@ class WorkController extends Controller
                     return '<span class="badge bg-'.$badge.'">'.$text.'</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    // Common buttons
                     $buttons = '
                         <button class="btn btn-info btn-sm viewWorkBtn" data-id="'.$row->id.'">View</button>
                         <button class="btn btn-primary btn-sm editWorkBtn" data-id="'.$row->id.'">Edit</button>
                         <button class="btn btn-danger btn-sm deleteWorkBtn" data-id="'.$row->id.'">Delete</button>
                     ';
-
-                    // Add feature/unfeature button
                     if ($row->is_featured == 1) {
-                        $buttons .= '
-                            <button class="btn btn-warning btn-sm unfeatureWorkBtn" data-id="'.$row->id.'">Unfeature</button>
-                        ';
+                        $buttons .= '<button class="btn btn-warning btn-sm unfeatureWorkBtn" data-id="'.$row->id.'">Unfeature</button>';
                     } else {
-                        $buttons .= '
-                            <button class="btn btn-success btn-sm featureWorkBtn" data-id="'.$row->id.'">Feature</button>
-                        ';
+                        $buttons .= '<button class="btn btn-success btn-sm featureWorkBtn" data-id="'.$row->id.'">Feature</button>';
                     }
-
                     return $buttons;
                 })
-                ->rawColumns(['work_image','image_left','image_right', 'price','quantity','is_active','featured','action'])
+
+                ->rawColumns(['work_type','work_image','image_left','image_right', 'price','quantity','is_active','featured','action'])
                 ->make(true);
         }
 
-        // Non-AJAX initial page load: need categories for dropdown
         $categories = Category::orderBy('name')->get(['id','name']);
         return view('backend.work.index', compact('categories'));
     }
@@ -120,6 +141,8 @@ class WorkController extends Controller
                                         'id'=>$g->id,
                                         'image_url'=>$g->image_url,
                                     ])->values(),
+            'work_type'         => $work->work_type,
+            'book_pdf_url'      => $work->book_pdf,
         ]);
     }
 
@@ -195,7 +218,23 @@ class WorkController extends Controller
      */
     public function store(Request $request)
     {
-        $workId = $request->input('id'); // null => create
+        $workId    = $request->input('id'); // null => create
+        $isCreate  = empty($workId);
+        $workType  = $request->input('work_type'); // 'art' | 'book'
+
+        // ---- Base rules (we'll adjust conditionally) ----
+        $workImageRule = ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'];
+        $bookPdfRule   = ['nullable','mimes:pdf','max:102400'];
+
+        if ($isCreate) {
+            if ($workType === 'art') {
+                // On create + art: require work_image
+                $workImageRule[0] = 'required';
+            } elseif ($workType === 'book') {
+                // On create + book: require pdf
+                $bookPdfRule[0] = 'required';
+            }
+        }
 
         $rules = [
             'category_id'      => ['required','exists:categories,id'],
@@ -204,31 +243,38 @@ class WorkController extends Controller
             'tags'             => ['nullable','string','max:255'],
             'details'          => ['nullable','string'],
             'is_active'        => ['required','in:0,1'],
+
+            // Media
             'art_video'        => ['nullable','mimetypes:video/mp4,video/ogg,video/webm','max:51200'],
-            'work_image'       => [$workId ? 'nullable' : 'required','image','mimes:jpg,jpeg,png,webp','max:4096'],
+            'work_image'       => $workImageRule,
             'image_left'       => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
             'image_right'      => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
             'gallery_images.*' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:4096'],
 
-            // fallback top-level price/quantity (used only if no variants)
+            // Fallback top-level price/quantity (used only if no variants)
             'price'            => ['nullable','numeric','min:0'],
             'quantity'         => ['nullable','integer','min:0'],
+
+            // Work type
+            'work_type'        => ['required','in:art,book'],
+            'book_pdf'         => $bookPdfRule,
         ];
 
         $validated = $request->validate($rules);
 
         // Base directories (relative to public/)
-        $fullDir = 'uploads/works/full';
-        $lowDir  = 'uploads/works/low';
-        $galFull = 'uploads/works/gallery/full';
-        $galLow  = 'uploads/works/gallery/low';
+        $fullDir  = 'uploads/works/full';
+        $lowDir   = 'uploads/works/low';
+        $galFull  = 'uploads/works/gallery/full';
+        $galLow   = 'uploads/works/gallery/low';
         $videoDir = 'uploads/works/videos';
-        $this->ensureDirs([$fullDir,$lowDir,$galFull,$galLow,$videoDir]);
+        $bookDir  = 'uploads/works/books';
+        $this->ensureDirs([$fullDir,$lowDir,$galFull,$galLow,$videoDir,$bookDir]);
 
         DB::beginTransaction();
         try {
             // Get or create Work
-            $work = $workId ? Work::lockForUpdate()->findOrFail($workId) : new Work();
+            $work = $isCreate ? new Work() : Work::lockForUpdate()->findOrFail($workId);
 
             $work->category_id = $validated['category_id'];
             $work->name        = $validated['name'];
@@ -236,40 +282,77 @@ class WorkController extends Controller
             $work->tags        = $validated['tags'] ?? null;
             $work->details     = $validated['details'] ?? null;
             $work->is_active   = $validated['is_active'];
+            $work->work_type   = $validated['work_type']; // 'art' | 'book'
 
-            // Images/video handling (same as before)
-            if ($request->hasFile('work_image')) {
+            // ----- Handle media by type -----
+            if ($work->work_type === 'book') {
+                // Switching to BOOK: remove any art media
                 $this->deleteIfExists($work->work_image);
                 $this->deleteIfExists($work->work_image_low);
-                $paths = $this->saveImageVariants($request->file('work_image'), $fullDir, $lowDir, 'work');
-                $work->work_image     = $paths['full'];
-                $work->work_image_low = $paths['low'];
-            }
-
-            if ($request->hasFile('image_left')) {
                 $this->deleteIfExists($work->image_left);
                 $this->deleteIfExists($work->image_left_low);
-                $paths = $this->saveImageVariants($request->file('image_left'), $fullDir, $lowDir, 'left');
-                $work->image_left     = $paths['full'];
-                $work->image_left_low = $paths['low'];
-            }
-
-            if ($request->hasFile('image_right')) {
                 $this->deleteIfExists($work->image_right);
                 $this->deleteIfExists($work->image_right_low);
-                $paths = $this->saveImageVariants($request->file('image_right'), $fullDir, $lowDir, 'right');
-                $work->image_right     = $paths['full'];
-                $work->image_right_low = $paths['low'];
-            }
-
-            if ($request->hasFile('art_video')) {
                 $this->deleteIfExists($work->art_video);
-                $videoFile = $request->file('art_video');
-                $ext = strtolower($videoFile->getClientOriginalExtension() ?: 'mp4');
-                $name = uniqid('vid_') . '.' . $ext;
-                $this->ensureDirs([$videoDir]);
-                $videoFile->move(public_path($videoDir), $name);
-                $work->art_video = "$videoDir/$name";
+                $work->work_image = $work->work_image_low = null;
+                $work->image_left = $work->image_left_low = null;
+                $work->image_right = $work->image_right_low = null;
+                $work->art_video = null;
+
+                // Save/replace BOOK PDF
+                if ($request->hasFile('book_pdf')) {
+                    $this->deleteIfExists($work->book_pdf);
+                    $pdfFile = $request->file('book_pdf');
+                    $ext     = strtolower($pdfFile->getClientOriginalExtension() ?: 'pdf');
+                    $name    = uniqid('book_').'.'.$ext;
+                    $pdfFile->move(public_path($bookDir), $name);
+                    $work->book_pdf = "$bookDir/$name";
+                }
+            } else {
+                // Type = ART
+                // If previously book, clear book_pdf
+                if (!empty($work->book_pdf)) {
+                    $this->deleteIfExists($work->book_pdf);
+                    $work->book_pdf = null;
+                }
+
+                // Work image
+                if ($request->hasFile('work_image')) {
+                    $this->deleteIfExists($work->work_image);
+                    $this->deleteIfExists($work->work_image_low);
+                    $paths = $this->saveImageVariants($request->file('work_image'), $fullDir, $lowDir, 'work');
+                    $work->work_image     = $paths['full'];
+                    $work->work_image_low = $paths['low'];
+                }
+
+                // Left image
+                if ($request->hasFile('image_left')) {
+                    $this->deleteIfExists($work->image_left);
+                    $this->deleteIfExists($work->image_left_low);
+                    $paths = $this->saveImageVariants($request->file('image_left'), $fullDir, $lowDir, 'left');
+                    $work->image_left     = $paths['full'];
+                    $work->image_left_low = $paths['low'];
+                }
+
+                // Right image
+                if ($request->hasFile('image_right')) {
+                    $this->deleteIfExists($work->image_right);
+                    $this->deleteIfExists($work->image_right_low);
+                    $paths = $this->saveImageVariants($request->file('image_right'), $fullDir, $lowDir, 'right');
+                    $work->image_right     = $paths['full'];
+                    $work->image_right_low = $paths['low'];
+                }
+
+                // Art video
+                if ($request->hasFile('art_video')) {
+                    $this->deleteIfExists($work->art_video);
+                    $videoFile = $request->file('art_video');
+                    $ext  = strtolower($videoFile->getClientOriginalExtension() ?: 'mp4');
+                    $name = uniqid('vid_') . '.' . $ext;
+                    $this->ensureDirs([$videoDir]);
+                    $videoFile->move(public_path($videoDir), $name);
+                    $work->art_video = "$videoDir/$name";
+                }
             }
 
             // Assign fallback price/quantity for now; may get cleared if variants exist
@@ -311,7 +394,6 @@ class WorkController extends Controller
                     }
                 }
             } else {
-                // if it's not array, ignore (no variants)
                 $variantsPayload = [];
             }
 
@@ -319,7 +401,7 @@ class WorkController extends Controller
                 DB::rollBack();
                 return response()->json([
                     'message' => 'Validation Error',
-                    'errors' => $variantErrors,
+                    'errors'  => $variantErrors,
                 ], 422);
             }
 
@@ -337,10 +419,10 @@ class WorkController extends Controller
                     sort($attrValIds); // deterministic
 
                     // SKU generation
-                    $baseSku = Str::slug($work->name) ?: 'variant';
-                    $valueSlugs = AttributeValue::whereIn('id', $attrValIds)->pluck('slug')->toArray();
-                    $combinationSlug = implode('-', $valueSlugs);
-                    $sku = $v['sku'] ?? ($baseSku . ($combinationSlug ? '-' . $combinationSlug : ''));
+                    $baseSku        = Str::slug($work->name) ?: 'variant';
+                    $valueSlugs     = AttributeValue::whereIn('id', $attrValIds)->pluck('slug')->toArray();
+                    $combinationSlug= implode('-', $valueSlugs);
+                    $sku            = $v['sku'] ?? ($baseSku . ($combinationSlug ? '-' . $combinationSlug : ''));
 
                     // ensure unique SKU
                     $originalSku = $sku;
@@ -352,8 +434,8 @@ class WorkController extends Controller
                     $variant = WorkVariant::create([
                         'work_id' => $work->id,
                         'sku'     => $sku,
-                        'price'   => $v['price'],
-                        'stock'   => $v['stock'],
+                        'price'   => (float) $v['price'],
+                        'stock'   => (int) $v['stock'],
                     ]);
 
                     if (!empty($attrValIds)) {
@@ -366,10 +448,10 @@ class WorkController extends Controller
                 $work->quantity = null;
                 $work->saveQuietly();
             } else {
-                // no variants: the fallback variant is already covered by earlier logic (you could optionally create a default variant here if your system relies on WorkVariant)
+                // No variants: keep top-level price/quantity if provided
             }
 
-            // Gallery (append)
+            // Gallery (append) — only meaningful for ART; allow keeping on book if you want
             if ($request->hasFile('gallery_images')) {
                 $sortBase = (int) WorkGallery::where('work_id', $work->id)->max('sort_order');
 
@@ -389,7 +471,7 @@ class WorkController extends Controller
 
             return response()->json([
                 'status'  => 'success',
-                'message' => $workId ? 'Work updated.' : 'Work created.',
+                'message' => $isCreate ? 'Work created.' : 'Work updated.',
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -401,6 +483,7 @@ class WorkController extends Controller
             ], 500);
         }
     }
+
 
     public function toggleFeature(Request $request, Work $work)
     {
@@ -444,6 +527,14 @@ class WorkController extends Controller
             // Delete files
             foreach ($paths as $p) {
                 $this->deleteIfExists($p);
+            }
+            // Delete video if exists
+            if ($work->art_video) {
+                $this->deleteIfExists($work->art_video);
+            }
+            // Delete book PDF if exists
+            if ($work->book_pdf) {
+                $this->deleteIfExists($work->book_pdf);
             }
 
             // Delete DB rows (gallery cascade if FK set; but be explicit)
@@ -536,61 +627,87 @@ class WorkController extends Controller
             'created_at'    => $work->created_at?->format('Y-m-d H:i'),
             'updated_at'    => $work->updated_at?->format('Y-m-d H:i'),
             'variants'      => $variants,
+            'work_type'    => $work->work_type,
+            'book_pdf_url'  => $work->book_pdf ? asset($work->book_pdf) : null,
         ]);
     }
 
 
-    public function workShow(Work $work)
+    public function workShow(Request $request, Work $work)
     {
-        $work->load([
-            'category',
-            'gallery',
-            'variants.attributeValues.attribute'
-        ]);
+        // Only show active work; eager-load everything needed
+        $work = Work::query()
+            ->whereKey($work->id)
+            ->where('is_active', 1)
+            ->with(['category','gallery','variants.attributeValues.attribute'])
+            ->firstOrFail();
 
+        // Figure out "who" the customer is (user or guest session)
+        $user    = $request->user();
+        $session = $request->session()->getId();
 
-        $variants = $work->variants->map(function ($v) {
+        // Sum ONLY this user's/session's cart quantities for this work's variants
+        $holds = TempCart::query()
+            ->select('work_variant_id', DB::raw('SUM(quantity) AS qty'))
+            ->where('work_id', $work->id)
+            ->where(function($q) use ($user, $session) {
+                if ($user) $q->where('user_id', $user->id);
+                else $q->whereNull('user_id')->where('session_id', $session);
+            })
+            ->groupBy('work_variant_id')
+            ->pluck('qty', 'work_variant_id'); // [variant_id => qty]
+
+        // Build variants array with *effective* stock for THIS viewer
+        $variants = $work->variants->map(function ($v) use ($holds) {
+            $reserved  = (int) ($holds[$v->id] ?? 0);
+            $origStock = is_null($v->stock) ? null : (int) $v->stock; // null means "unbounded" (if you use that)
+            $effStock  = is_null($origStock) ? null : max(0, $origStock - $reserved);
+
             return [
-                'id' => $v->id,
-                'sku' => $v->sku,
-                'price' => $v->price,
-                'stock' => $v->stock,
+                'id'        => $v->id,
+                'sku'       => $v->sku,
+                'price'     => $v->price,
+                'stock'     => $effStock, // 👈 per-user visible stock
                 'value_ids' => $v->attributeValues->pluck('id')->values()->all(),
             ];
         })->values();
 
-
+        // Attributes as you already had
         $attributes = [];
         foreach ($work->variants as $v) {
             foreach ($v->attributeValues as $av) {
                 $attrId = $av->attribute_id;
                 if (!isset($attributes[$attrId])) {
                     $attributes[$attrId] = [
-                        'id' => $attrId,
-                        'name' => $av->attribute->name,
+                        'id'     => $attrId,
+                        'name'   => $av->attribute->name,
                         'values' => [],
                     ];
                 }
                 $attributes[$attrId]['values'][$av->id] = [
-                    'id' => $av->id,
+                    'id'    => $av->id,
                     'value' => $av->value,
-                    'slug' => $av->slug,
+                    'slug'  => $av->slug,
                 ];
             }
         }
-
-        $attributes = array_map(function ($a) {
+        $attributes = array_values(array_map(function ($a) {
             $a['values'] = array_values($a['values']);
             return $a;
-        }, $attributes);
+        }, $attributes));
 
-        $attributes = array_values($attributes);
+        // Flag: are ALL variants (for this viewer) out-of-stock?
+        $allOut = $variants->count() > 0
+            ? $variants->every(fn($vv) => (int)($vv['stock'] ?? 0) <= 0)
+            : false;
 
         return view('frontend.art-info.art_info', [
-            'work'        => $work,
-            'category'    => $work->category,
-            'variants'    => $variants,
-            'attributes'  => $attributes,
+            'work'       => $work,
+            'category'   => $work->category,
+            'variants'   => $variants,
+            'attributes' => $attributes,
+            'allOut'     => $allOut,
         ]);
     }
+
 }
