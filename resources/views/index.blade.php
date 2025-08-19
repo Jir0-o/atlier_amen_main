@@ -22,8 +22,8 @@
                     rgb(0 0 0 / 15%),
                     rgb(255 255 255 / 35%));
             backdrop-filter: blur(1px);
-            color: #191919;
-            -webkit-text-stroke: 
+            color: #fff;
+            /* -webkit-text-stroke: 1px solid #fff; */
         }
 
         .chart-wrap { position: relative; height: 400px; width: 700px; }

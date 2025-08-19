@@ -101,6 +101,13 @@
                 </div>
             </div>
         </div> --}}
+        <div class="position-absolute top-0 start-0 end-0 h-35">
+            <div class="text-center p-5">
+                <div class="d-inline-block overflow-hidden">
+                    <a class="btn-explore playfair text-uppercase" href="{{ route('index') }}">Explore my artwork</a>
+                </div>
+            </div>
+        </div>
         <a href="{{ route('index') }}" class="logo-fixed">
             <img data-aos="zoom-in" data-aos-delay="750" data-aos-duration="3000" src="{{ asset('frontend-css/img/logo/logo.png')}}" alt="logo" loading="lazy">
         </a>
