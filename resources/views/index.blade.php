@@ -22,8 +22,8 @@
                     rgb(0 0 0 / 15%),
                     rgb(255 255 255 / 35%));
             backdrop-filter: blur(1px);
-            color: #191919;
-            -webkit-text-stroke: 
+            color: #fff;
+            /* -webkit-text-stroke: 1px solid #fff; */
         }
     </style>
 
@@ -94,7 +94,7 @@
                             <tr>
                                 <td>01</td>
                                 <td>
-                                    <a class="text-dark font-weight-bold" style="text-decoration: underline;" href="./art_info.html">
+                                    <a class="text-white font-weight-bold" style="text-decoration: underline;" href="./art_info.html">
                                         Lorem ipsum dolor sit amer connecter, adipisicing elis.
                                     </a>
                                 </td>

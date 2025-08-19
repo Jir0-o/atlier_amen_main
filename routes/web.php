@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('frontend.home.landing');
-});
+})->name('frontend.landing');
 Route::post('/logout', function () {
     return redirect()->route('frontend.login');
 })->name('logout')->middleware('auth');

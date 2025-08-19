@@ -4723,7 +4723,7 @@ pre code {
 .table {
   width: 100%;
   margin-bottom: 1rem;
-  color: #212529;
+  color: #fff;
 }
 
 .table th,
@@ -22395,12 +22395,19 @@ dl li {
 
 body {  
   /* background-image: linear-gradient(135deg, #4b0066, #0e0019); */
-  color: #363636;
+  color: #fff;
   -webkit-text-stroke: #fff;
   background-size: cover;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-image: url('./../../images/bg-img.jpg');
+  background-image: linear-gradient(
+      135deg, 
+      rgb(0 0 0 / 50%),
+      rgb(255 255 255 / 35%),
+      rgb(0 0 0 / 75%),
+      rgb(0 0 0 / 75%),
+      rgb(255 255 255 / 25%)
+    ), url('./../../../frontend-css/img/webimg/bg-auth.jpg');
 }
 
 .dataTable :where(th, td) {
@@ -22408,5 +22415,5 @@ body {
 }
 
 .ck-editor__main > * {
-  color: #363636;
+  color: #fff;
 }
