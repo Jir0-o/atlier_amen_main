@@ -4,6 +4,8 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AttributeValueController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactMessageController;
@@ -62,7 +64,40 @@ Route::prefix('frontend')->group(function () {
     Route::get('/cart', [FrontendController::class, 'cart'])->name('cart');
     Route::get('/login', [FrontendController::class, 'login'])->middleware('guest')->name('frontend.login');
     Route::get('/register', [FrontendController::class, 'register'])->middleware('guest')->name('frontend.register');
-    Route::get('/password/reset', [FrontendController::class, 'resetPassword'])->middleware('guest')->name('frontend.password.request');
+    
+    //Forgot password Route
+    Route::get('/user/forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('user.forgot-password.request');
+
+    // Send reset link email
+    Route::post('/user/forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('user.forgot-password.email');
+
+    // Show "Reset Password" page (from email link)
+    Route::get('/user/reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('user.password.reset');
+
+    // Handle new password submission
+    Route::post('/user/reset-password', [NewPasswordController::class, 'store'])
+        ->name('user.password.update');
+
+    //email Verification Route
+    Route::get('/email/verify', function () {
+            return view('auth.verify-email'); // make this blade (example below)
+        })->middleware('auth')->name('verification.notice');
+
+        // Handle email verification link
+        Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+            $request->fulfill(); // marks email as verified
+            return redirect()->route('index')->with('status', 'Email verified successfully.');
+        })->middleware(['auth', 'signed', 'throttle:6,1'])->name('verification.verify');
+
+        // Resend verification email
+        Route::post('/email/verification-notification', function (Request $request) {
+            $request->user()->sendEmailVerificationNotification();
+            return back()->with('status', 'Verification link sent!');
+        })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
     Route::get('/about', [FrontendController::class, 'about'])->name('about');
     Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
     Route::get('/wishlist', [WishlistController::class, 'index'])->middleware('feature:wishlist_enabled')->name('wishlist');
@@ -95,7 +130,7 @@ Route::prefix('frontend')->group(function () {
 
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', 'verified')->group(function () {
 
     //resource routes
     Route::resource('categories', CategoryController::class);
@@ -103,6 +138,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('adminContract', ContractController::class);
     Route::resource('works', WorkController::class);
     Route::resource('users', UserController::class);
+
+    //Admin Profile Routes
+    Route::get('/admin/profile/{enc}', [ProfileController::class, 'adminEdit'])->name('admin.profile.edit');
+
+    // Update basic profile (name, avatar)
+    Route::post('/admin/profile/{enc}/profile',  [ProfileController::class, 'adminUpdateProfile'])->name('admin.settings.profile');
+
+    // Change password
+    Route::post('/admin/profile/{enc}/password', [ProfileController::class, 'AdminChangePassword'])->name('admin.settings.password');
 
 
     //dashbaord routes

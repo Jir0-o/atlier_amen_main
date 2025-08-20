@@ -19,6 +19,7 @@ use App\Models\OrderItem;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Auth\Events\Registered;
 
 class UserController extends Controller
 {
@@ -159,7 +160,6 @@ class UserController extends Controller
      */
     public function store(FrontendRegisterRequest $request, CartMergeService $cartMerge): JsonResponse
     {
-        // capture guest SID BEFORE login happens
         $oldSid = $request->session()->getId();
 
         $name = trim($request->input('f_name') . ' ' . $request->input('l_name'));
@@ -173,22 +173,23 @@ class UserController extends Controller
             'password'   => Hash::make($request->input('password')),
         ]);
 
-        Auth::login($user);
+        event(new Registered($user));
 
+
+        Auth::login($user);
         $request->session()->regenerate();
 
         WishlistController::mergeGuestToUser($oldSid, Auth::id());
-
         $cartMerge->merge($oldSid, Auth::id(), $request->session()->getId());
-
 
         $cartCount = (int) TempCart::where('user_id', Auth::id())->sum('quantity');
         session(['cart_count' => $cartCount]);
 
+        // 👉 Redirect frontend to verification notice
         return response()->json([
-            'status'   => 'success',
-            'message'  => 'Registration successful! You are now logged in.',
-            'redirect' => route('index'),
+            'status'     => 'success',
+            'message'    => 'Registration successful! We emailed you a verification link.',
+            'redirect'   => route('verification.notice'),
             'cart_count' => $cartCount,
         ]);
     }

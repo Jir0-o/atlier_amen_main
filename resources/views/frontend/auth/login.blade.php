@@ -38,7 +38,7 @@
                                         </p>
                                         <p class="m-0">
                                             <strong>
-                                                <a href="{{ route('frontend.password.request') }}">Forgot Password</a>
+                                                <a href="{{ route('user.forgot-password.request') }}">Forgot Password</a>
                                             </strong>
                                         </p>
                                     </div>

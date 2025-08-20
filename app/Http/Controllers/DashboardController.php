@@ -62,6 +62,14 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        $buyerList = Order::select('user_id')
+            ->selectRaw('SUM(total_qty) as items')
+            ->selectRaw('SUM(grand_total) as spend')
+            ->groupBy('user_id')
+            ->orderByDesc('spend')
+            ->with(['user:id,name']) // adjust if your user columns differ
+            ->get();
+
         // --- (Optional) Quick KPIs you might show elsewhere
         $totalWorks     = Work::count();
         $activeWorks    = Work::where('is_active', 1)->count();
@@ -83,6 +91,8 @@ class DashboardController extends Controller
             'activeWorks'  => $activeWorks,
             'pendingOrders'  => $pendingOrders,
             'totalRevenue' => $totalRevenue,
+
+            'buyerList' => $buyerList
         ]);
     }
 }

@@ -132,7 +132,7 @@
                                 <th>Total spend</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody> 
                         @forelse($topBuyers as $i => $row)
                             <tr>
                                 <td>{{ str_pad($i+1, 2, '0', STR_PAD_LEFT) }}</td>

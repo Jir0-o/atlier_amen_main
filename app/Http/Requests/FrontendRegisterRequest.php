@@ -18,14 +18,22 @@ class FrontendRegisterRequest extends FormRequest
             'l_name' => ['required', 'string', 'max:100'],
             'email'  => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'country'=> ['nullable', 'string', 'max:191'], 
-            'password' => ['required', 'string', 'min:8', 'confirmed'], 
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[A-Z])(?=.*[\W_]).+$/',
+                'confirmed' 
+            ],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'password.confirmed' => 'Password & confirm password do not match.',
+            'password.min'   => 'Password must be at least 8 characters.',
+            'password.regex' => 'Password must contain at least one uppercase letter and one special character.',
+            'password.confirmed' => 'Passwords do not match.',
         ];
     }
 }

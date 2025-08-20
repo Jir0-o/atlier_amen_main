@@ -22,7 +22,7 @@
 
               <form method="POST" action="{{ route('user.password.update') }}">
                 @csrf
- 
+                @method('PUT')
                 <input type="hidden" name="token" value="{{ $token }}">
 
                 <div class="mb-3">

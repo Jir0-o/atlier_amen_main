@@ -1,14 +1,24 @@
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
     <ul class="nav">
+        @php
+            use Illuminate\Support\Facades\Crypt;
+            use Illuminate\Support\Facades\Storage;
+            use Illuminate\Support\Str;
+
+            $u = auth()->user();
+            $enc = Crypt::encryptString($u->id);
+
+            $photo = $u->photo_path ? asset($u->photo_path)
+                                        : asset('plus-admin/images/faces/face1.jpg');
+        @endphp
+
         <li class="nav-item nav-profile border-bottom">
-            <a href="#" class="nav-link flex-column">
+            <a href="{{ route('admin.profile.edit', $enc) }}" class="nav-link flex-column" title="Profile settings">
                 <div class="nav-profile-image">
-                    <img src="{{ asset('plus-admin/images/faces/face1.jpg') }}" alt="profile" />
-                    <!--change to offline or busy as needed-->
+                    <img src="{{ $photo }}" alt="profile" />
                 </div>
                 <div class="nav-profile-text d-flex ml-0 mb-3 flex-column">
-                    <span class="font-weight-semibold mb-1 mt-2 text-center">Atlier Amen</span>
-                    {{-- <span class="text-secondary icon-sm text-center">$3499.00</span> --}}
+                    <span class="font-weight-semibold mb-1 mt-2 text-center">{{ $u?->name ?? 'Profile' }}</span>
                 </div>
             </a>
         </li>

@@ -9,10 +9,16 @@ use App\Models\Wishlist;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+
 
 
 class ProfileController extends Controller
@@ -222,5 +228,89 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('frontend.login')->with('success', 'Email changed. Please log in again.');
+    }
+
+    private function decryptAndGetUser(string $enc): User
+    {
+        $id = Crypt::decryptString($enc);
+        $user = User::findOrFail($id);
+
+        // Only the owner can access
+        if (auth()->id() !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        return $user;
+    }
+
+    public function adminEdit(string $enc)
+    {
+        $user = $this->decryptAndGetUser($enc);
+        return view('backend.profile.edit', compact('user', 'enc'));
+    }
+
+    public function adminUpdateProfile(Request $request, string $enc)
+    {
+        $user = $this->decryptAndGetUser($enc);
+
+        $validated = $request->validate([
+            'name'  => ['required', 'string', 'max:255'],
+            'email' => ['sometimes','email','max:255', Rule::unique('users','email')->ignore($user->id)],
+            'photo' => ['nullable', 'image', 'max:2048'],
+        ]);
+
+        if ($request->hasFile('photo')) {
+            $dir = public_path('uploads/avatars');
+            if (!File::exists($dir)) {
+                File::makeDirectory($dir, 0755, true);
+            }
+
+            // delete old photo if it lives under public/
+            if (!empty($user->photo_path)) {
+                $old = public_path($user->photo_path);
+                if (File::exists($old)) {
+                    File::delete($old);
+                }
+            }
+
+            $ext = $request->file('photo')->getClientOriginalExtension();
+            $filename = Str::uuid()->toString() . '.' . $ext;
+
+            // move the file into public/uploads/avatars
+            $request->file('photo')->move($dir, $filename);
+
+            // save relative path for easy asset() usage
+            $user->photo_path = 'uploads/avatars/' . $filename;
+        }
+
+        if (isset($validated['name']))  $user->name  = $validated['name'];
+        if (isset($validated['email'])) $user->email = $validated['email'];
+
+        $user->save();
+
+        return back()->with('status', 'Profile updated successfully.');
+    }
+
+    public function AdminChangePassword(Request $request, string $enc)
+    {
+        $user = $this->decryptAndGetUser($enc);
+
+        $request->validate([
+            'current_password'      => ['required', 'current_password'],
+            'password'              => [
+                'required',
+                'confirmed',
+                'min:8',
+                // at least 1 uppercase and 1 special char (matches your earlier rule)
+                'regex:/^(?=.*[A-Z])(?=.*[\W_]).+$/',
+            ],
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter and one special character.',
+        ]);
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return back()->with('status', 'Password changed successfully.');
     }
 }
