@@ -168,6 +168,12 @@
                             <span class="menu-title">Footer Settings</span>
                         </a>
                     </li>
+                    <li class="nav-item"></li>
+                        <a class="nav-link" href="{{ route('backend.settings') }}">
+                            <i class="mdi mdi-image menu-icon"></i>
+                            <span class="menu-title">Permission Settings</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </li>

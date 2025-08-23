@@ -15,6 +15,10 @@ use App\Http\Controllers\FooterSettingController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Settings\PermissionController;
+use App\Http\Controllers\Settings\RoleController;
+use App\Http\Controllers\Settings\UserRoleController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShopFeatureController;
 use App\Http\Controllers\TempCartController;
 use App\Http\Controllers\UserController;
@@ -22,6 +26,8 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WorkController;
 use App\Models\Category;
 use App\Models\Work;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -138,6 +144,31 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::resource('adminContract', ContractController::class);
     Route::resource('works', WorkController::class);
     Route::resource('users', UserController::class);
+
+    //settings route
+
+    Route::get('/settings', [SettingsController::class, 'settings'])
+        ->name('backend.settings');
+
+    Route::prefix('settings')->name('settings.')->group(function () {
+
+        // ---- Roles ----
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');   
+        Route::get('/roles/list', [RoleController::class, 'list'])->name('roles.list');   
+        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+
+        // ---- Permissions ----
+        Route::get('/permissions/list', [PermissionController::class, 'list'])->name('permissions.list'); 
+        Route::post('/permissions', [PermissionController::class, 'store'])->name('permissions.store');
+        Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
+        Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+
+        // ---- Users + assign roles ----
+        Route::get('/users/list', [UserRoleController::class, 'list'])->name('users.list'); 
+        Route::post('/users/{user}/roles', [UserRoleController::class, 'syncRoles'])->name('users.syncRoles');
+    });
 
     //Admin Profile Routes
     Route::get('/admin/profile/{enc}', [ProfileController::class, 'adminEdit'])->name('admin.profile.edit');
