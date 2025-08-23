@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can View Dashboard')->only('index');
+    }
     public function index()
     {
         // --- Time window: last 12 months (including current month)

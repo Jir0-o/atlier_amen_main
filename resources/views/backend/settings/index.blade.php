@@ -32,19 +32,35 @@
         <div class="d-flex gap-2 mb-3">
             <button class="btn btn-primary" id="btnAddPerm">+ New Permission</button>
         </div>
-      <ul class="list-group" id="permList"></ul>
+      <table id="permTable" class="table table-hover align-middle mb-0 table-transparent">
+        <thead>
+          <tr>
+            <th>Permission</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
 
     {{-- Users & Roles --}}
     <div class="tab-pane fade" id="tab-users" role="tabpanel">
       <div class="d-flex gap-2 mb-3">
         <input type="text" class="form-control w-auto" id="userSearch" placeholder="Search users">
-        <button class="btn btn-outline-secondary" id="btnReloadUsers">Reload</button>
+        <button class="btn btn-primary" id="btnReloadUsers">Reload</button>
       </div>
       <div class="table-responsive">
         <table class="table table-sm" id="usersTable">
-          <thead><tr><th>Name</th><th>Email</th><th>Roles</th><th class="text-end">Actions</th></tr></thead>
-          <tbody></tbody>
+          <thead>
+            <tr><th>Name</th>
+              <th>Email</th>
+              <th>Roles</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+
+          </tbody>
         </table>
       </div>
     </div>
@@ -53,7 +69,7 @@
 
 {{-- Role modal --}}
 <div class="modal fade" id="roleModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <form id="roleForm">
         <div class="modal-header">
@@ -109,7 +125,7 @@
 {{-- Assign roles modal --}}
 <div class="modal fade" id="assignModal" tabindex="-1">
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content"> 
       <form id="assignForm">
         <div class="modal-header">
           <h5 class="modal-title">Assign Roles</h5>
@@ -185,41 +201,43 @@ function debounce(fn, wait){ let t; return function(...args){
     permissionModal.show();
   }
 
-  function loadPermissions(cb){
-    $.getJSON(routes.permsList, function(perms){
-      // role modal checkboxes
-      const $wrap = $('#permCheckboxes').empty();
-      perms.forEach(p => {
-        $wrap.append(
-          `<div class="col-6">
-             <div class="form-check">
-               <input class="form-check-input perm-check" type="checkbox" value="${p.name}" id="perm_${p.id}">
-               <label class="form-check-label" for="perm_${p.id}">${p.name}</label>
-             </div>
-           </div>`
-        );
-      });
-
-      // Permissions tab list
-      const $list = $('#permList').empty();
-      perms.forEach(p => {
-        $list.append(
-          `<li class="list-group-item d-flex justify-content-between align-items-center">
-             <span>${p.name}</span>
-             <div>
-               <button class="btn btn-sm btn-outline-primary me-2 btn-edit-perm"
-                       data-id="${p.id}" data-name="${p.name}">Edit</button>
-               <button class="btn btn-sm btn-outline-danger btn-del-perm"
-                       data-id="${p.id}">Delete</button>
-             </div>
-           </li>`
-        );
-      });
-
-      cb && cb(perms);
+function loadPermissions(cb){
+  $.getJSON(routes.permsList, function(resp){
+    const perms = Array.isArray(resp) ? resp : (resp.data || []);
+    const $wrap = $('#permCheckboxes').empty();
+    perms.forEach(p => {
+      $wrap.append(
+        `<div class="col-6">
+           <div class="form-check">
+             <input class="form-check-input perm-check" type="checkbox" value="${p.name}" id="perm_${p.id}">
+             <label class="form-check-label" for="perm_${p.id}">${p.name}</label>
+           </div>
+         </div>`
+      );
     });
-  }
-  loadPermissions();
+
+    const $tb = $('#permTable tbody');
+    if ($tb.length) {
+      $tb.empty();
+      perms.forEach(p => {
+        $tb.append(
+          `<tr>
+             <td>${p.name}</td>
+             <td class="text-end">
+              <button type="button" class="btn btn-sm btn-outline-secondary me-2 btn-edit-perm"
+                      data-id="${p.id}" data-name="${p.name}">Edit</button>
+              <button type="button" class="btn btn-sm btn-outline-danger btn-del-perm"
+                      data-id="${p.id}">Delete</button>
+             </td>
+           </tr>`
+        );
+      });
+    }
+
+    cb && cb(perms);
+  });
+}
+loadPermissions();
 
   // Open "Add Permission" modal (use this button in your Permissions tab)
   $('#btnAddPerm').on('click', function(){
@@ -246,18 +264,28 @@ function debounce(fn, wait){ let t; return function(...args){
   });
 
   // Edit/Delete actions in the permissions list
-  $('#permList').on('click', '.btn-edit-perm', function(){
+  $(document).on('click', '.btn-edit-perm', function (e) {
+    e.preventDefault();
     const id   = $(this).data('id');
     const name = $(this).data('name');
     openPermEdit(id, name);
   });
 
-  $('#permList').on('click', '.btn-del-perm', function(){
+  // Delete
+  $(document).on('click', '.btn-del-perm', function (e) {
+    e.preventDefault();
     const id = $(this).data('id');
-    if(!confirm('Delete this permission?')) return;
-    $.ajax({ url: routes.permsDelete(id), method: 'DELETE' })
-      .done(() => loadPermissions())
-      .fail(err => alert(err.responseJSON?.message || 'Failed to delete permission'));
+    if (!confirm('Delete this permission?')) return;
+
+    $.ajax({
+      url: routes.permsDelete(id),
+      type: 'DELETE', // or method: 'DELETE'
+    })
+    .done(() => loadPermissions())
+    .fail(err => {
+      console.error(err);
+      alert(err?.responseJSON?.message || 'Failed to delete permission');
+    });
   });
 
   // =================== Roles ===================
@@ -272,7 +300,7 @@ function debounce(fn, wait){ let t; return function(...args){
             <td>${r.name}</td>
             <td>${perms}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-2 btn-edit-role" data-id="${r.id}">Edit</button>
+              <button class="btn btn-sm btn-outline-secondary me-2 btn-edit-role" data-id="${r.id}">Edit</button>
               <button class="btn btn-sm btn-outline-danger btn-del-role" data-id="${r.id}">Delete</button>
             </td>
           </tr>`
@@ -347,7 +375,7 @@ function debounce(fn, wait){ let t; return function(...args){
              <td>${u.email}</td>
              <td>${roles}</td>
              <td class="text-end">
-               <button class="btn btn-sm btn-outline-primary btn-assign" data-id="${u.id}">Assign Roles</button>
+               <button class="btn btn-sm btn-outline-secondary btn-assign" data-id="${u.id}">Assign Roles</button>
              </td>
            </tr>`
         );

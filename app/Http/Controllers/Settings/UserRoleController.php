@@ -9,6 +9,10 @@ use Spatie\Permission\Models\Role;
 
 class UserRoleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Settings')->only('list', 'syncRoles');
+    }
     public function list(Request $r)
     {
         $q = User::query()->with('roles');

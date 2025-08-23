@@ -40,12 +40,15 @@
         <li class="pt-2 pb-1">
             <span class="nav-item-head">Quick Menu</span>
         </li>
+        @can('Can View Dashboard')
         <li class="nav-item">
             <a class="nav-link" href="{{ route('dashboard') }}">
                 <i class="mdi mdi-compass-outline menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
             </a>
         </li>
+        @endcan
+        @can('Can View Work/Product')
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#frontend_menu" aria-expanded="false"
                 aria-controls="frontend_menu">
@@ -55,22 +58,28 @@
             </a>
             <div class="collapse" id="frontend_menu">
                 <ul class="nav flex-column sub-menu">
+                    @can('Can Access Work Category')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('categories.index') }}">
                             <i class="mdi mdi-format-list-bulleted menu-icon"></i>
                             <span class="menu-title">Work Category</span>
                         </a>
                     </li>
+                    @endcan
+                    @can('Can Access My Work')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('works.index') }}">
                             <i class="mdi mdi-briefcase menu-icon"></i>
                             <span class="menu-title">My Work</span>
                         </a>
                     </li>
+                    @endcan
                 </ul>
             </div>
         </li>
+        @endcan
         {{-- list nav item for about contract --}}
+        @can('Can View Admin Info')
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#contact_menu" aria-expanded="false"
                 aria-controls="contact_menu">
@@ -80,21 +89,27 @@
             </a>
             <div class="collapse" id="contact_menu">
                 <ul class="nav flex-column sub-menu">
+                    @can('Can Access About')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('adminAbout.index') }}">
                             <i class="mdi mdi-information menu-icon"></i>
                             <span class="menu-title">About</span>
                         </a>
                     </li>
+                    @endcan
+                    @can('Can Access Contact')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('adminContract.index') }}">
                             <i class="mdi mdi-file-document-box menu-icon"></i>
                             <span class="menu-title">Contact</span>
                         </a>
                     </li>
+                    @endcan
                 </ul>
             </div>
         </li>
+        @endcan
+        @can('Can View Order')
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#order_menu" aria-expanded="false"
                 aria-controls="order_menu">
@@ -104,21 +119,27 @@
             </a>
             <div class="collapse" id="order_menu">
                 <ul class="nav flex-column sub-menu">
+                    @can('Can Access Order')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.orders.index') }}">
                             <i class="mdi mdi-cart menu-icon"></i>
                             <span class="menu-title">Order</span>
                         </a>
                     </li>
+                    @endcan
+                    @can('Can Access Contact Messages')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('contact-messages.index') }}">
                             <i class="mdi mdi-message-text menu-icon"></i>
                             <span class="menu-title">Contact Messages</span>
                         </a>
                     </li>
+                    @endcan
                 </ul>
             </div>
         </li>
+        @endcan
+        @can('Can View Attribute')
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#attribute_menu" aria-expanded="false"
                 aria-controls="attribute_menu">
@@ -127,22 +148,28 @@
                 <i class="menu-arrow"></i>
             </a>
             <div class="collapse" id="attribute_menu">
-                <ul class="nav flex-column sub-menu">                    
+                <ul class="nav flex-column sub-menu">  
+                    @can('Can Access Attribute')                  
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.attributes.index') }}">
                             <i class="mdi mdi-tag menu-icon"></i>
                             <span class="menu-title">Attribute</span>
                         </a>
                     </li>
+                    @endcan
+                    @can('Can Access Attribute Value')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.attribute-values.index') }}">
                             <i class="mdi mdi-tag-multiple menu-icon"></i>
                             <span class="menu-title">Attribute Value</span>
                         </a>
                     </li>
+                    @endcan
                 </ul>
             </div>
         </li>
+        @endcan
+        @can('Can Access Settings')
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
                 <i class="mdi mdi-account-multiple menu-icon"></i>
@@ -177,6 +204,7 @@
                 </ul>
             </div>
         </li>
+        @endcan
         <li class="nav-item">
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                 @csrf

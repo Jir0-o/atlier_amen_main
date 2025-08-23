@@ -10,6 +10,10 @@ use Yajra\DataTables\DataTables;
 
 class CategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Work Category')->only('index', 'create', 'store', 'edit', 'update', 'destroy');
+    }
     public function index(Request $request)
     {
         if ($request->ajax()) {

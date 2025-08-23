@@ -10,6 +10,10 @@ use Yajra\DataTables\Facades\DataTables as FacadesDataTables;
 
 class FooterSettingController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Settings')->only('index', 'data', 'show', 'update');
+    }
     public function index()
     {
         return view('backend.settings.footer');

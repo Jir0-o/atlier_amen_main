@@ -9,6 +9,10 @@ use Spatie\Permission\Models\Permission;
 
 class RoleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Settings')->only('index', 'store', 'update', 'destroy');
+    }
     public function index()
     {
         // returns the Blade page (tabs for Roles/Permissions/Users)

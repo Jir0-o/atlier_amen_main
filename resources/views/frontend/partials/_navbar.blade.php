@@ -16,15 +16,15 @@
                     </a>
                     @feature('shop_enabled')
                         @feature('cart_enabled')
-                            <a href="{{ route('cart') }}" class="fs-5 me-md-3 position-relative">
-                                <i class="ri-shopping-cart-2-line"></i>
-                                @if (session('cart_count', 0) > 0)
-                                    <span id="mini-cart-count"
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-light">
-                                        {{ session('cart_count') }}
-                                    </span>
-                                @endif
-                            </a>
+                        <a href="{{ route('cart') }}" class="fs-5 me-md-3 position-relative">
+                            <i class="ri-shopping-cart-2-line"></i>
+                            @if (session('cart_count', 0) > 0)
+                                <span id="mini-cart-count"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-light">
+                                    {{ session('cart_count') }}
+                                </span>
+                            @endif
+                        </a>
                         @endfeature
                         @feature('wishlist_enabled')
                             <a href="{{ route('wishlist') }}" class="fs-5 me-md-3">
@@ -38,7 +38,7 @@
                         </a>
                     @endguest
                     @auth
-                        @if (auth()->user()->role == 1)
+                        @if (auth()->user()->hasRole('Super Admin'))
                             <a href="{{ route('dashboard') }}" class="fs-5 me-md-3">
                                 <i class="ri-user-line"></i>
                             </a>

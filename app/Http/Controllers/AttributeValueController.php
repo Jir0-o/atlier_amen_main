@@ -11,6 +11,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class AttributeValueController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Attribute Value')->only('index', 'store', 'update', 'destroy');
+    }
     public function index(Request $request)
     {
         if ($request->ajax()) {

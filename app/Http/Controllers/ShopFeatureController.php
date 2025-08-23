@@ -8,6 +8,10 @@ use App\Support\Feature;
 
 class ShopFeatureController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Settings')->only('edit', 'update');
+    }
     public function edit()
     {
         $settings = Setting::whereIn('key', [

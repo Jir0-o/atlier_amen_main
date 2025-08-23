@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AboutController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access About')->only('index', 'store');
+    }
     public function index()
     {
         $about = About::first();

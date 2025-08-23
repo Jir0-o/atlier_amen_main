@@ -2,6 +2,7 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use App\Models\TempCart;
 use Illuminate\Support\Facades\Cache;
 
 class Feature
@@ -25,5 +26,16 @@ class Feature
     public static function clear(): void
     {
         Cache::forget('settings.map');
+    }
+
+    public static function get(): int
+    {
+        if (auth()->check()) {
+            return (int) TempCart::where('user_id', auth()->id())
+                ->sum('quantity');
+        }
+
+        return (int) TempCart::where('session_id', session()->getId())
+            ->sum('quantity');
     }
 }

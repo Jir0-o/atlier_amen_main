@@ -8,6 +8,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class OrderController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Order')->only('index', 'show', 'accept', 'reject');
+    }
     public function index()
     {
         return view('backend.orders.index'); 

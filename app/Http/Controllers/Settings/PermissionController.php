@@ -8,6 +8,10 @@ use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Settings')->only('list', 'store', 'update', 'destroy');
+    }
     public function list(Request $r)
     {
         $q = Permission::query();

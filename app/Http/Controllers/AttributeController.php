@@ -10,6 +10,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class AttributeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Attribute')->only('index', 'store', 'update', 'destroy');
+    }
     public function index(Request $request)
     {
         if ($request->ajax()) {

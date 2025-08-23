@@ -9,6 +9,11 @@ use Yajra\DataTables\DataTables;
 
 class ContractController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Can Access Contact')->only('index', 'store');
+        $this->middleware('permission:Can Access Contact Messages')->only('Adminindex', 'Adminshow', 'Admindestroy');
+    }
     public function index()
     {
         $contract = Contract::first();
